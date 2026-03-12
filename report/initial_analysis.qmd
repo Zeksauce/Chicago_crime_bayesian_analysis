@@ -20,14 +20,14 @@ library(ggplot2)
 ```
 
 ```{r}
-df <- read.csv("C:/Users/user/Downloads/chicago_vehicle_theft_crimes_2026.csv")
 
+df <- read.csv("../data/chicago_vehicle_theft_crimes_2026.csv")
 ```
 
 You can add options to executable code like this
 
 ```{r}
-# mdy_hms handles the string formatting "02/22/2026 12:00:00 AM" automatically
+# mdy_hms handles the string formatting "mm/dd/yyyy hh:mm:ss AM" automatically
 df$Date <- mdy_hms(df$Date)
 # Convert the date to a numeric date since the start of the dataset
 df$day_numeric <- as.numeric(difftime(df$Date, min(df$Date), units = "days"))
@@ -67,10 +67,80 @@ From research into priors the annual car theft rate in Chicago is 8.25 for every
 
 Since we are using the independent and identically dsitributed assumption for the car theft rate in Chicago, we expect that the expected rate should be close to 1/365.25 of the annual rate, which leads to a rate of 61.44.
 
-We can model the prior that has expectation of 61.44 with very high variance since the estimate was extrapolated down from a national annual average.
+For the variance of the rate, the monthly 5 year counts range from 630 to 3186 which translates into an average daily rate range of 21 to 106 and since each month in a 5 year range accounts for 1 60th of the data, I suggest that choosing a distribution that has tail probabilities around 0.0166. Since the gamma distribution is right skewed I will adjust my prior to have the 0.98 quantile around 106.
+
+$$
+\text{Modelling the daily car theft rate as } \lambda \text{ as being distributed as a Gamma distribution: }
+$$
+
+$$\lambda \sim Gamma(\alpha, \beta)$$ $$\text{From our assumption that the average rate should be 61.44: }$$
+$$\text{E}(\lambda) = \frac{\alpha}{\beta}= 61.44 $$
+
+$$\beta= \frac{\alpha}{61.44}$$
+
+$$
+\text{From the assumption about the 0.98th quantile being 106:}
+$$
+
+$$
+\text{P}(\lambda \le 106) = 0.98
+$$
+
+$$
+\text{Substituting the CDF of a Gamma distribution:}
+$$
+
+$$
+\text{P}(\lambda \le x) = F(x; \alpha, \beta) =\int_{0}^{x} \frac{\beta^\alpha}{\Gamma(\alpha)} t^{\alpha-1} e^{-\beta t} \, dt =   \frac{\gamma(\alpha, \beta x)}{\Gamma(\alpha)}
+$$
+
+$$ \text{Substituting the contraint from the expectation of a Gamma distribution:} $$
+
+$$ \text{P}(\lambda \le 106) =\frac{\gamma(\alpha, \frac{106}{61.44}\alpha)}{\Gamma(\alpha)} = 0.98$$
+
+$$ \text{Unfortunately analytically solving this is difficult so to computationally solve the unique solution for }\alpha :$$
+
+$$ F(106; \alpha,\frac{\alpha}{61.44}) = 0.98$$
+
+$$  F^{-1}(0.98; \alpha,\frac{\alpha}{61.44})= \text{qgamma}(0.98, \alpha,\frac{\alpha}{61.44}) = 106 $$
+
+$$
+\text{Solving the single root of the funtion } g(\alpha):
+$$
+
+$$  g(\alpha) = \text{qgamma}(0.98, \alpha,\frac{\alpha}{61.44}) - 106 = 0 $$
 
 ```{r}
-plot_gamma(6.144,0.1)
+# Targets for gamma
+target_mean <- 61.44
+target_q98 <- 106
+
+# 2. Define a function that finds the difference between 
+# the actual 98th quantile and our target
+find_alpha <- function(alpha) {
+  # Calculate beta based on the current alpha and known mean
+  beta <- alpha / target_mean
+  
+  # Calculate what the 98th quantile is with this alpha/beta
+  current_q98 <- qgamma(0.98, shape = alpha, rate = beta)
+  
+  # Return the difference (we want this to be zero)
+  return(current_q98 - target_q98)
+}
+
+# 3. Use uniroot to solve for alpha
+# We search for alpha between a small value (0.1) and a large value (100)
+solution <- uniroot(find_alpha, lower = 0.01, upper = 100)
+
+prior_alpha <- solution$root
+prior_beta <- final_alpha / target_mean
+
+print(paste("Shape (Alpha):", round(final_alpha, 4)))
+print(paste("Rate (Beta):", round(final_beta, 4)))
+```
+
+```{r}
+plot_gamma(prior_alpha, prior_beta)
 ```
 
 Using a gamma-poisson model has conjugate priors:
@@ -103,8 +173,8 @@ We can also simulate the actual number stolen tomorrow and construct the predict
 
 ```{r}
 set.seed(84735)
-# Simulate 10,000 potential average theft rates
-n_sims <- 10000
+# Simulate 500,000 potential average theft rates
+n_sims <- 500000
 lambda_sims <- rgamma(n_sims, shape = alpha, rate = beta)
 
 # For each lambda, simulate a number of thefts
@@ -122,8 +192,7 @@ ggplot(predictive_df, aes(x = thefts)) +
            color = "black") +
   geom_vline(xintercept = mean(predictive_df$thefts), 
              color = "red", 
-             linetype = "dashed", 
-             size = 1) +
+             linetype = "dashed") +
   labs(title = "Posterior Predictive Distribution of Daily Thefts",
        subtitle = "Red dashed line represents the mean predicted daily count",
        x = "Predicted Number of Thefts",
