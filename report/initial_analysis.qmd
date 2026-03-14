@@ -75,40 +75,39 @@ From research into priors the annual car theft rate in Chicago is 8.25 for every
 
 Since we are using the independent and identically distributed assumption for the car theft rate in Chicago, we expect that the expected rate should be close to one 365th of the annual rate, which leads to a rate of 61.44.
 
-For the variance of the rate, the monthly 5 year counts range from 630 to 3186 which translates into an average daily rate range of 21 to 106 and since each month in a 5 year range accounts for one 60th of the data, I suggest that choosing a distribution that has tail probabilities around 0.0166, for either or possibly both tails. However a Gamma distribution is not flexible enough to model all three constraints simultaneously so I decided to only use the left tail probability assumption. In other words the 0.0166th quantile of the prior Gamma distribution should be 21. $$\text{From our assumption that the average rate should be 61.44: }$$
-$$\text{E}(\lambda) = \frac{\alpha}{\beta}= 61.44 $$
+For the variance of the rate, the monthly 5 year counts range from 630 to 3186 which translates into an average daily rate range of 21 to 106 and since each month in a 5 year range accounts for one 60th of the data, I suggest that choosing a distribution that has tail probabilities around 0.0166, for either or possibly both tails. However a Gamma distribution is not flexible enough to model all three constraints simultaneously so I decided to only use the left tail probability assumption. In other words the 0.0166th quantile of the prior Gamma distribution should be 21. $\text{From our assumption that the average rate should be 61.44: }$ $$\text{E}(\lambda) = \frac{\alpha}{\beta}= 61.44 $$
 
 $$\beta= \frac{\alpha}{61.44}$$
 
-$$
+$
 \text{From the assumption about the 0.0166th quantile being 21:}
-$$
+$
 
 $$
 \text{P}(\lambda \le 21) = 0.0166
 $$
 
-$$
+$
 \text{Substituting the CDF of a Gamma distribution:}
-$$
+$
 
 $$
 \text{P}(\lambda \le x) = F(x; \alpha, \beta) =\int_{0}^{x} \frac{\beta^\alpha}{\Gamma(\alpha)} t^{\alpha-1} e^{-\beta t} \, dt =   \frac{\gamma(\alpha, \beta x)}{\Gamma(\alpha)}
 $$
 
-$$ \text{Substituting the contraint from the expectation of a Gamma distribution:} $$
+$ \text{Substituting the contraint from the expectation of a Gamma distribution:} $
 
 $$ \text{P}(\lambda \le 21) =\frac{\gamma(\alpha, \frac{21}{61.44}\alpha)}{\Gamma(\alpha)} = 0.0166$$
 
-$$ \text{Analytically solving this is difficult so we computationally solve the unique solution for }\alpha :$$
+$ \text{Analytically solving this is difficult so we computationally solve the unique solution for }\alpha :$
 
 $$
 \text{P}(\lambda \le 21) = F(21,\alpha,\frac{\alpha}{61.44}) =  \text{pgamma}(21, \alpha,\frac{\alpha}{61.44}) = 0.0166
 $$
 
-$$
+$
 \text{Equivalently solving the single root of the funtion } g(\alpha):
-$$
+$
 
 $$  g(\alpha) = \text{pgamma}(21, \alpha,\frac{\alpha}{61.44}) - 0.0166= 0 $$
 

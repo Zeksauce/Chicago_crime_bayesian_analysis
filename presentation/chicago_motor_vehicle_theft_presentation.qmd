@@ -4,9 +4,12 @@ author: "Thuy, Trian, Puru, Zac"
 format: revealjs
 ---
 
-## Quarto
+## Are vehicles in Chicago susceptible targets of crime?
 
-Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <https://quarto.org/docs/presentations/>.
+-   Nationally 1 million vehicles are stolen annually.
+-   On average 3 out of 1000 people will have their car stolen this year
+-   People are skeptical about leaving things in the car, but what about the car itself?
+-   Chicago being one of the most crime ridden cities in the US makes a good worst-case benchmark for the nation
 
 ## Bullets
 
