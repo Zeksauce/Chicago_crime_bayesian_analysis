@@ -26,4 +26,91 @@ When you click the **Render** button a presentation will be generated that inclu
 1 + 1
 ```
 
+## 1. Exploring Times of Vehicle Theft
 
+What is the probability that a vehicle theft in Chicago occurs at night? (night = between 6pm and 6am)
+
+::: {.fragment}
+```{r}
+library(readr)
+library(bayesrules)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+
+df <- read.csv("../data/chicago_vehicle_theft_crimes_2026.csv")
+
+# add a column converting Date to DateTime
+df <- df %>%
+  mutate(DateTime = strptime(Date, format = "%m/%d/%Y %I:%M:%S %p"))
+
+df %>%
+  mutate(hour = hour(DateTime),
+         period = ifelse(hour >= 18 | hour < 6, "Night", "Day")) %>%
+  count(hour, period) %>%
+  ggplot(aes(x = factor(hour), y = n, fill = period)) +
+  geom_col()+
+  labs(
+    title = "2026 Vehicle Thefts by Hour of Day",
+    x = "Hour of Day",
+    y = "Count"
+  )
+```
+:::
+
+## Prior
+
+- Source: FBI National Incident-Based Reporting System
+- 52.4% out of 750,000 vehicle thefts in 2024 occurred between 6pm and 6am
+$$\pi \sim Beta(104, 96)$$
+
+## Likelihood
+
+```{r echo=TRUE}
+nrow(df)
+```
+
+```{r echo=TRUE}
+count_night <- df %>%
+  filter(hour(DateTime) >= 18 | hour(DateTime) < 6) %>%
+  nrow()
+
+count_night
+```
+- Likelihood: y ~ Binomial(n, π)
+- n = 2369, y = 1371
+
+## Posterior Approximation of π
+```{r}
+grid_data <- data.frame(pi_grid = seq(from = 0.50, to = 0.61, length = 101))
+grid_data <- grid_data %>% 
+  mutate(prior = dbeta(pi_grid, 104, 96),
+         likelihood = dbinom(1371,2369, pi_grid))
+
+grid_data <- grid_data %>% 
+  mutate(unnormalized = likelihood * prior,
+         posterior = unnormalized / sum(unnormalized))
+
+ggplot(grid_data, aes(x = pi_grid, y = posterior)) + 
+  geom_point() + 
+  geom_segment(aes(x = pi_grid, xend = pi_grid, y = 0, yend = posterior))
+```
+
+## Posterior Simulation of π
+
+```{r}
+set.seed(84735)
+
+post_sample <- sample_n(grid_data, size = 10000, 
+                        weight = posterior, replace = TRUE)
+set.seed(84735)
+ggplot(post_sample, aes(x = pi_grid)) + 
+  geom_histogram(aes(y = after_stat(density)), color = "white", bins=34) + 
+  stat_function(fun = dbeta, args = list(1475, 1094)) + 
+  lims(x = c(0.5, 0.61))
+```
+
+```{r echo=TRUE}
+quantile(post_sample$pi_grid, c(0.025, 0.975))
+```
