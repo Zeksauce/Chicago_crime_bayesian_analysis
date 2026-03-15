@@ -120,3 +120,15 @@ quantile(post_sample$pi_grid, c(0.025, 0.975))
 $\pi | y = 0.574$
 
 The probability that a vehicle theft occurs at night is approximately 0.574
+
+## Fighting Crime with Bayesian Analysis
+
+(delete this later) Who will these results help in the future and how? 
+
+1. Help people protect their personal vehicles by being aware of dangerous times to leave vehicles unlocked or out. Help law enforcement enforce regulations to limit vehicle theft, such as increasing street lighting.
+
+## Limitations + Next Steps
+
+(delete this later) If you had all the resources in the world and unlimited time what would you do on this topic? What are the limitations of the analysis you have done that you could correct in the future with unlimited resources?
+
+1. No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis.
