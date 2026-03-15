@@ -111,6 +111,13 @@ ggplot(post_sample, aes(x = pi_grid)) +
   lims(x = c(0.5, 0.61))
 ```
 
+## Conclusion
+
 ```{r echo=TRUE}
 quantile(post_sample$pi_grid, c(0.025, 0.975))
+mean(post_sample$pi_grid)
 ```
+
+$\pi | y = 0.574$
+
+The probability that a vehicle theft occurs at night is approximately 0.574

@@ -285,13 +285,22 @@ Thuy, Trian, Puru, Zac
 <section id="posterior-simulation-of-π" class="slide level2">
 <h2>Posterior Simulation of π</h2>
 
-<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-6-1.png" width="960" class="r-stretch"><div class="cell">
+<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-6-1.png" width="960" class="r-stretch"></section>
+<section id="conclusion" class="slide level2">
+<h2>Conclusion</h2>
+<div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">quantile</span>(post_sample<span class="sc">$</span>pi_grid, <span class="fu">c</span>(<span class="fl">0.025</span>, <span class="fl">0.975</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  2.5%  97.5% 
 0.5550 0.5935 </code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">mean</span>(post_sample<span class="sc">$</span>pi_grid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.5742616</code></pre>
 </div>
+</div>
+<p><span class="math inline">\(\pi | y = 0.574\)</span></p>
+<p>The probability that a vehicle theft occurs at night is approximately 0.574</p>
 
 </section>
     </div>
