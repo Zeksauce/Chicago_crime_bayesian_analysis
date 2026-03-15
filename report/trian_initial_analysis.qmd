@@ -1,5 +1,5 @@
 ---
-title: 'Q1: Times of Theft Changed'
+title: 'Q1: Times of Theft'
 author: "Trian Gunney"
 date: "`r Sys.Date()`"
 output:
@@ -32,7 +32,9 @@ df <- df %>%
 
 head(df,3)
 ```
+
 \newpage
+
 **2. Explore the data**
 
 Let's take a preliminary look at the data to get an idea of what we're working with. What does the basic distribution of vehicle thefts look like across the hours of the day?
@@ -54,6 +56,7 @@ df %>%
 We see that car thefts generally tend to be more common at night, between 6pm and up until 3am. Indeed, the volume of the blue columns outweighs the pink columns. So we know $\pi$ will likely be greater than 0.5. But by how much?
 
 \newpage
+
 **3. Build a prior**
 
 To build a prior, we look at 2024 vehicle theft data as reported by the FBI National Incident-Based Reporting System, which reported that out of approximately 750,000 vehicle thefts that year, around 52.4% occurred between 6pm and 6am.
@@ -75,6 +78,7 @@ plot_beta(104, 96) # visualize the distribution
 ```
 
 \newpage
+
 **4. Likelihood**
 
 The Binomial model for the number of vehicle thefts that took place at night is $Y|\pi \sim Bin(2369, \pi)$. n=2369 because that is the number of rows in our dataset.
@@ -93,22 +97,17 @@ count_night <- df %>%
 count_night
 ```
 
-Our likelihood function is
-$$L(\pi \mid y=1371) = \pi^{1371}(1-\pi)^{2369-1371}$$
-\newpage
-**5. Derive the posterior**
+Our likelihood function is $$L(\pi \mid y=1371) = \pi^{1371}(1-\pi)^{2369-1371}$$ \newpage \*\*5. Derive the posterior\*\*
 
-The Beta posterior distribution of $\pi$ after having observed the data is 
+The Beta posterior distribution of $\pi$ after having observed the data is
 
-$$\pi | y \sim Beta (\alpha + y, \beta + n - y) $$
-$$\pi | y \sim Beta(104 + 1371, 96 + 2369 - 1371) $$
-$$\pi | y \sim Beta(1475, 1094) $$
+$$\pi | y \sim Beta (\alpha + y, \beta + n - y) $$ $$\pi | y \sim Beta(104 + 1371, 96 + 2369 - 1371) $$ $$\pi | y \sim Beta(1475, 1094) $$
 
 ```{r}
 plot_beta(1475, 1094)
 ```
 
-Our posterior distribution has a lot less variance than our prior, and a higher mean and mode. 
+Our posterior distribution has a lot less variance than our prior, and a higher mean and mode.
 
 ```{r}
 summarize_beta(1475, 1094)
@@ -120,7 +119,7 @@ The mean and mode of the posterior are around 0.57.
 plot_beta_binomial(alpha=104, beta=96, y=1371, n=2369)
 ```
 
-Because of our large sample size, the posterior is "weighted" more toward the likelihood. In our data we observed a greater $\pi$ compared with our prior, so the mean of the posterior is pulled in the direction of the data. 
+Because of our large sample size, the posterior is "weighted" more toward the likelihood. In our data we observed a greater $\pi$ compared with our prior, so the mean of the posterior is pulled in the direction of the data.
 
 ```{r}
 summarize_beta_binomial(alpha=104, beta=96, y=1371, n=2369)
@@ -129,6 +128,7 @@ summarize_beta_binomial(alpha=104, beta=96, y=1371, n=2369)
 We confirm that our posterior has a higher mean and mode than our prior. So based on the data we observed, the probability that a vehicle theft occurs at night is higher than we originally thought, around 0.57 compared with 0.52.
 
 \newpage
+
 **6. Grid Approximation**
 
 Let's approximate the posterior using grid approximation. First split the continuum of possible $\pi$ values onto a finite grid.
@@ -137,7 +137,9 @@ Let's approximate the posterior using grid approximation. First split the contin
 grid_data <- data.frame(pi_grid = seq(from = 0.50, to = 0.60, length = 5))
 grid_data
 ```
-Encode the Beta(104, 96) prior and Binomial(2369, $\pi$) likelihood  with Y=1371 at each $\pi$ in pi_grid.
+
+Encode the Beta(104, 96) prior and Binomial(2369, $\pi$) likelihood with Y=1371 at each $\pi$ in pi_grid.
+
 ```{r}
 grid_data <- grid_data %>% 
   mutate(prior = dbeta(pi_grid, 104, 96),
@@ -145,6 +147,7 @@ grid_data <- grid_data %>%
 ```
 
 Now approximate the posterior.
+
 ```{r}
 grid_data <- grid_data %>% 
   mutate(unnormalized = likelihood * prior,
@@ -204,13 +207,15 @@ quantile(post_sample$pi_grid, c(0.025, 0.975))
 
 ```{r}
 ggplot(post_sample, aes(x = pi_grid)) + 
-  geom_histogram(aes(y = after_stat(density)), color = "white", bins=30) + 
+  geom_histogram(aes(y = after_stat(density)), color = "white", bins=40) + 
   stat_function(fun = dbeta, args = list(1475, 1094)) + 
   lims(x = c(0.5, 0.61))
 ```
+
 This sample aligns much better with the actual posterior pdf, and we once again conclude that the probability that a vehicle theft occurs at night is around 0.57, with a credible interval between 0.56 and 0.59.
 
 \newpage
+
 **7. Compare Weekends and Weekdays**
 
 Since people's activities tend to be different on weekdays and weekdays, let's compare the distribution of vehicle thefts by those two groups. We use the beta (104, 96) prior.
@@ -247,17 +252,12 @@ weekday_night_count <- df %>%
 weekend_night_count
 weekday_night_count
 ```
-We observe that 935 out of 1635 weekday vehicle thefts took place at night.
-436 out of 734 weekend vehicle thefts took place at night
+
+We observe that 935 out of 1635 weekday vehicle thefts took place at night. 436 out of 734 weekend vehicle thefts took place at night
 
 Update our priors:
 
-$$\pi | y \sim Beta (\alpha + y, \beta + n - y) $$
-$$\pi_{weekday} | y_{weekday} \sim Beta (104 + 935, 96 + 1635 - 935) $$
-$$\pi_{weekend} | y_{weekend} \sim Beta (104 + 436, 96 + 734 - 436) $$
-$$\pi_{weekday} | y_{weekday} \sim Beta (1039, 796) $$
-$$\pi_{weekend} | y_{weekend} \sim Beta (540, 394) $$
-Plot both posteriors.
+$$\pi | y \sim Beta (\alpha + y, \beta + n - y) $$ $$\pi_{weekday} | y_{weekday} \sim Beta (104 + 935, 96 + 1635 - 935) $$ $$\pi_{weekend} | y_{weekend} \sim Beta (104 + 436, 96 + 734 - 436) $$ $$\pi_{weekday} | y_{weekday} \sim Beta (1039, 796) $$ $$\pi_{weekend} | y_{weekend} \sim Beta (540, 394) $$ Plot both posteriors.
 
 ```{r}
 ggplot() +
@@ -276,6 +276,7 @@ ggplot() +
 ```
 
 Find credible intervals and means:
+
 ```{r}
 summary_weekday <- summarize_beta(1039, 796)
 summary_weekday
@@ -295,9 +296,11 @@ interval_weekday
 interval_weekend <- qbeta(c(0.025, 0.975), 540, 394)
 interval_weekend
 ```
+
 The posterior means indicate that nighttime vehicle thefts are slightly more likely on weekends (0.578) than on weekdays (0.566). However, the difference is small so while there may be a slight increase in risk on weekends, it is not a dramatic shift. The credible intervals also have significant overlap, so we can infer that the difference is not significant.
 
 \newpage
+
 **7. Conclusion**
 
 Informative results on the distribution of times of vehicle theft could potentially help people protect their personal vehicles by being wary of dangerous times to leave vehicles unlocked or out. Results could also help law enforcement enforce regulations to limit vehicle theft crimes, such as increasing street lighting at especially vulnerable times of day.
