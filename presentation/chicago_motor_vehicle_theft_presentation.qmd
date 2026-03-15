@@ -110,13 +110,12 @@ ggplot(post_sample, aes(x = pi_grid)) +
   stat_function(fun = dbeta, args = list(1475, 1094)) + 
   lims(x = c(0.5, 0.61))
 ```
+```{r echo=TRUE}
+mean(post_sample$pi_grid)
+quantile(post_sample$pi_grid, c(0.025, 0.975))
+```
 
 ## Conclusion
-
-```{r echo=TRUE}
-quantile(post_sample$pi_grid, c(0.025, 0.975))
-mean(post_sample$pi_grid)
-```
 
 $\pi | y = 0.574$
 
