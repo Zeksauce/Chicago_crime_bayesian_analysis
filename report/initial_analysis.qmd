@@ -61,13 +61,13 @@ Looking at the plot there is relatively high variance in the daily reported numb
 
 To model these counts we propose discrete random variables that range from 0 to infinity, which are independent and have the same mean. One type of random variable that can model these conditions is the Poisson random variable
 
-$$ \text{Let } Y_i\text{ represent the number of car thefts in on a day }i\ $$
+$ \text{Let } Y_i\text{ represent the number of car thefts in on a day }i:$
 
 $$Y_i|\lambda \sim Poisson(\lambda)$$
 
 Furthermore the rate of the Poisson random variable can be modeled as a Gamma random variable.
 
-$$ \text{Let }\lambda \text{ represent the daily car theft rate} $$
+$ \text{Let }\lambda \text{ represent the daily car theft rate}: $
 
 $$\lambda \sim Gamma(\alpha, \beta)$$
 
@@ -199,6 +199,8 @@ quantile(predictive_thefts, c(0.025, 0.975))
 
 ```
 
+With our assumptions, there is a 95% probability that the number of cars stolen tomorrow will be between 33 and 59 inclusive.
+
 ```{r}
 predictive_df <- data.frame(thefts = predictive_thefts)
 
@@ -215,3 +217,20 @@ ggplot(predictive_df, aes(x = thefts)) +
        y = "Probability") +
   theme_minimal()
 ```
+
+The constructed posterior predictive distribution seems to be centered at a mode and have slight right skew seen by how the mean is to the right of the mode.
+
+If we wanted to predict the single best number for the number of cars stolen tomorrow the mode of the distribution would be the best estimate.
+
+```{r}
+counts <- count(predictive_df, thefts) %>% mutate(p = n/n_sims)
+counts[which.max(counts$n),]
+```
+
+The most likely value is 45 with a probability of 0.058756.
+
+```{r}
+summary(predictive_df)
+```
+
+On average we should see the rate of 45.57 cars stolen per night and a 50% chance of having less than or equal to 45 cars stolen.
