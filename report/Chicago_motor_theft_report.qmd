@@ -12,7 +12,7 @@ The report is broken down into 4 smaller research questions each with their own 
 1.  **When are the vehicles stolen?**
 2.  **How many vehicles are stolen?**
 3.  **Which communities will have a vehicle stolen from it?**
-4.  **Which communities have the highest arrest rates for vehicle thefts?**
+4.  **Do communities have the different arrest rates for vehicle thefts?**
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -529,3 +529,186 @@ summary(predictive_df)
 ```
 
 On average we should see the rate of 45.57 cars stolen per night and a 50% chance of having less than or equal to 45 cars stolen.
+
+# {Thuy's part}
+
+## 4. Does the probability of arrest for motor vehicle theft vary by community area in Chicago in 2026?
+
+Here, we investigate whether the probability of arrest for vehicle theft differs by community area in Chicago.
+
+We start with defining a Bayes model. A natural choice is a Beta Binomial model. We define:
+
+$y_j$ = number of motor-vehicle-theft incidents that resulted in an arrest in area $j$.
+
+$n_j$ = total number of motor-vehicle-theft incidents in area $j$.
+
+$\pi_j = P(\text{arrest} \mid \text{MVT in area } j)$.
+
+$$\pi_j \sim \text{Beta}(\alpha, \beta)$$ Likelihood: $$y_j \mid \pi_j \sim \text{Binomial}(n_j, \pi_j)$$ Posterior: $$\pi_j \mid \text{data} \sim \text{Beta}(\alpha + y_j, \ \beta + n_j - y_j)$$
+
+Nationally, only about 10% of vehicle thefts result in an arrest. We can start with this assumption and set our prior to about $\pi_j \sim \text{Beta}(2, 18)$, which has a mean of 0.1.
+
+```{r}
+library(bayesrules)
+
+plot_beta(2,18)
+
+```
+
+Now, we load our data.
+
+```{r}
+library(tidyverse)
+
+df <- read.csv("../../data/chicago_vehicle_theft_crimes_2026.csv", stringsAsFactors = FALSE)
+
+df <- df %>%
+  mutate(arrest_numeric = ifelse(Arrest == "true", 1, 0))
+
+head(df)
+```
+
+Compute $\pi_j$ for each area.
+
+```{r}
+district_counts <- df %>%
+  group_by(District) %>%
+  summarize(
+    n = n(),                    # total incidents
+    y = sum(arrest_numeric),    # arrests
+    observed_rate = y/n
+  ) %>%
+  arrange(desc(n))
+
+district_counts
+
+```
+
+Now using the Beta-Binomial closed form, lets update the posterior for each district.
+
+```{r}
+alpha_prior <- 2
+beta_prior <- 18
+
+district_posteriors <- district_counts %>%
+  mutate(
+    alpha_post = alpha_prior + y,
+    beta_post = beta_prior + n - y,
+    
+    posterior_mean = alpha_post / (alpha_post + beta_post),
+    
+    ci_lower = qbeta(0.025, alpha_post, beta_post),
+    ci_upper = qbeta(0.975, alpha_post, beta_post)
+  )
+
+district_posteriors
+```
+
+As we can see from this table, between-group posterior means are quite different. Comparing between district 12 and district 11 for instance, we can see quite a large difference.
+
+```{r}
+plot_beta_binomial(2, 18, y=0, n=213)
+
+plot_beta_binomial(2,18,y=10,n=128)
+```
+
+```{r}
+library(ggplot2)
+
+district_posteriors %>%
+  arrange(posterior_mean) %>%
+  mutate(District = factor(District, levels = District)) %>%
+  ggplot(aes(x = posterior_mean, y = District)) +
+  geom_point() +
+  geom_errorbarh(aes(xmin = ci_lower, xmax = ci_upper), height = 0.2) +
+  labs(
+    title = "Posterior Arrest Probability by District",
+    x = "Posterior Mean Arrest Probability",
+    y = "District"
+  ) +
+  theme_minimal()
+```
+
+Using a Beta(2,18) prior centered at a 10% arrest rate, we updated our beliefs about the arrest probability for motor vehicle theft in each district. We have plotted the confidence intervals for each district above,
+
+Now we'd like to statistically compute whether arrest proportions differ by district in Chicago. Formally, we compute $P(\pi_i > \pi_j)$ for all pairs of district i and district j. In order to do this, we sample from the posterior distribution of each district and compare the samples.
+
+```{r}
+
+set.seed(123)
+num_samples <- 5000
+
+district_names <- district_posteriors$District
+num_districts <- length(district_names)
+
+# Generate samples for each district
+posterior_samples <- lapply(
+  1:num_districts,
+  function(i){
+    rbeta(
+      num_samples,
+      district_posteriors$alpha_post[i],
+      district_posteriors$beta_post[i]
+    )
+  }
+)
+```
+
+Next, we compare every pair of districts and compute the probability that one has a higher arrest rate than the other.
+
+```{r}
+pairwise_matrix <- matrix(
+  NA,
+  nrow = num_districts,
+  ncol = num_districts,
+  dimnames = list(district_names, district_names)
+)
+
+for(i in 1:num_districts){
+  for(j in 1:num_districts){
+    
+    samples_i <- posterior_samples[[i]]
+    samples_j <- posterior_samples[[j]]
+    
+    pairwise_matrix[i, j] <- mean(samples_i > samples_j)
+    
+  }
+}
+
+pairwise_matrix
+```
+
+We create a heatmap to identify the strongest differences.
+
+```{r}
+library(reshape2)
+library(ggplot2)
+
+pairwise_df <- melt(pairwise_matrix)
+
+colnames(pairwise_df) <- c("District_i", "District_j", "Probability")
+
+ggplot(pairwise_df, aes(x = District_j, y = District_i, fill = Probability)) +
+  geom_tile() +
+  scale_fill_gradient2(
+    low = "blue",
+    mid = "white",
+    high = "red",
+    midpoint = 0.5,
+    limits = c(0,1)
+  ) +
+  labs(
+    title = "Pairwise Posterior Probabilities of Higher Arrest Rates",
+    subtitle = "Cell (i,j) shows P(pi_i > pi_j)",
+    x = "District j",
+    y = "District i",
+    fill = "Probability"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+```
+
+From this heatmap we can see that there are several districts with pairwise probability of higher arrest rates being above 0.95. It is clear that the posterior distributions of arrest rates for motor vehicle thefts differ by district.
