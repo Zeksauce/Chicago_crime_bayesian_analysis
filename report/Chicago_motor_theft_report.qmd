@@ -308,6 +308,8 @@ With more resources and time, I would like to conduct a deeper analysis of vehic
 
 In this section we will break down our statistical modelling for determining the number of stolen vehicles in Chicago for a new day.
 
+**Exploring daily theft counts**
+
 First we read the data set containing all currently reported vehicle thefts since the start of the 2026 year.
 
 ```{r}
@@ -352,9 +354,11 @@ ggplot(daily_counts, aes(x = theft_count)) +
 
 Looking at the plot there is relatively high variance in the daily reported number of stolen vehicles in Chicago, however the number is generally centered around the 40-50 range, indicating that on average days have similar numbers of cars stolen.
 
+**Statistical Model**
+
 To model these counts we propose discrete random variables that range from 0 to infinity, which are independent and have the same mean. One type of random variable that can model these conditions is the Poisson random variable
 
-$\text{Let } Y_i\text{ represent the number of car thefts in on a day }i:$
+$$\text{Let } Y_i\text{ represent the number of car thefts in on a day }i:$$
 
 $$Y_i|\lambda \sim Poisson(\lambda)$$
 
@@ -364,11 +368,17 @@ $$ \text{Let }\lambda \text{ represent the daily car theft rate}: $$
 
 $$\lambda \sim Gamma(\alpha, \beta)$$
 
+**Defining a Prior**
+
 From research into priors the annual car theft rate in Chicago is 8.25 for every 1000 people. Given that Chicago has a population of around 2.72 million, that leads to 22440 total stolen cars per year in Chicago!
 
 Since we are using the independent and identically distributed assumption for the car theft rate in Chicago, we expect that the expected rate should be close to one 365th of the annual rate, which leads to a rate of 61.44.
 
-For the variance of the rate, the monthly 5 year counts range from 630 to 3186 which translates into an average daily rate range of 21 to 106 and since each month in a 5 year range accounts for one 60th of the data, I suggest that choosing a distribution that has tail probabilities around 0.0166, for either or possibly both tails. However a Gamma distribution is not flexible enough to model all three constraints simultaneously so I decided to only use the left tail probability assumption. In other words the 0.0166th quantile of the prior Gamma distribution should be 21. $\text{From our assumption that the average rate should be 61.44: }$ $$\text{E}(\lambda) = \frac{\alpha}{\beta}= 61.44 $$
+For the variance of the rate, the monthly 5 year counts range from 630 to 3186 which translates into an average daily rate range of 21 to 106 and since each month in a 5 year range accounts for one 60th of the data, I suggest that choosing a distribution that has tail probabilities around 0.0166, for either or possibly both tails. However a Gamma distribution is not flexible enough to model all three constraints simultaneously so I decided to only use the left tail probability assumption. In other words the 0.0166th quantile of the prior Gamma distribution should be 21.
+
+$$\text{From our assumption that the average rate should be 61.44: }$$
+
+$$\text{E}(\lambda) = \frac{\alpha}{\beta}= 61.44 $$
 
 $$\beta= \frac{\alpha}{61.44}$$
 
@@ -438,6 +448,8 @@ pgamma(c(21,106),prior_alpha,prior_beta)
 
 Notice that this prior has constrained lower rates more than higher rates, but could have been reversed if there is more belief that rates that are higher than the maximum rate in the past 5 years should be less likely.
 
+**Gamma-Poisson conjugacy**
+
 Using a gamma-poisson model allows us to make use of a conjugate prior:
 
 ```{r}
@@ -463,6 +475,8 @@ Using this we can construct a 95% credible interval for the mean rate for tomorr
 ```{r}
 qgamma(c(0.025,0.975), alpha, beta)
 ```
+
+**Posterior Prediction**
 
 We can also simulate the actual number stolen tomorrow and construct the predictive interval
 
@@ -498,6 +512,8 @@ ggplot(predictive_df, aes(x = thefts)) +
 ```
 
 The constructed posterior predictive distribution seems to be centered at a mode and have slight right skew seen by how the mean is to the right of the mode.
+
+**45 vehicles will be stolen in Chicago tomorrow**
 
 If we wanted to predict the single best number for the number of cars stolen tomorrow the mode of the distribution would be the best estimate.
 
