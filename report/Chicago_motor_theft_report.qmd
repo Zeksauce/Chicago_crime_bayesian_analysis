@@ -1,0 +1,515 @@
+---
+title: "Chicago_motor_theft_report"
+format: html
+---
+
+# Are vehicles in Chicago susceptible targets of crime?
+
+This report outlines the source code that was used to determine the susceptibility of vehicles in Chicago.
+
+The report is broken down into 4 smaller research questions each with their own analyses.
+
+1.  When are the vehicles stolen?
+2.  How many vehicles are stolen?
+3.  Which communities will have a vehicle stolen from it?
+4.  Which communities have the highest arrest rates for vehicle thefts?
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(bayesrules)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+```
+
+## 1. When are vehicles stolen?
+
+We will explore the subquestion: What is the probability that a vehicle theft in Chicago occurs at night? Define ‘night’ in this question as between 6pm and 6am.
+
+Read in the Chicago crime dataset. The data has already been filtered to only include vehicle thefts in 2026, since that is our subject of interest. Each row has a unique ID and case number, and the rest of the columns contain other details about the crime.
+
+```{r}
+df <- read.csv("../data/chicago_vehicle_theft_crimes_2026.csv")
+
+# add a column converting Date to DateTime
+df <- df %>%
+  mutate(DateTime = strptime(Date, format = "%m/%d/%Y %I:%M:%S %p"))
+
+head(df,3)
+```
+
+**Exploring the data**
+
+Let's take a preliminary look at the data to get an idea of what we're working with. What does the basic distribution of vehicle thefts look like across the hours of the day?
+
+```{r}
+df %>%
+  mutate(hour = hour(DateTime),
+         period = ifelse(hour >= 18 | hour < 6, "Night", "Day")) %>%
+  count(hour, period) %>%
+  ggplot(aes(x = factor(hour), y = n, fill = period)) +
+  geom_col()+
+  labs(
+    title = "2026 Vehicle Thefts by Hour of Day",
+    x = "Hour of Day",
+    y = "Count"
+  )
+```
+
+We see that car thefts generally tend to be more common at night, between 6pm and up until 3am. Indeed, the volume of the blue columns outweighs the pink columns. So we know $\pi$ will likely be greater than 0.5. But by how much?
+
+\newpage
+
+**Building a prior**
+
+To build a prior, we look at 2024 vehicle theft data as reported by the FBI National Incident-Based Reporting System, which reported that out of approximately 750,000 vehicle thefts that year, around 52.4% occurred between 6pm and 6am.
+
+We assign a Beta(104, 96) prior to $\pi$, the probability a vehicle theft occurs at night, putting the mean at 0.52 and most values between 0.45 and 0.59.
+
+A Beta prior is a good choice for this data because it is defined on 0 to 1, the same domain as a probability. The Beta distribution is also conjugate to the Binomial likelihood, so we will be able to produce an informative Beta posterior given data.
+
+```{r}
+summarize_beta(104, 96) # mean at 0.52, mode at 0.52
+```
+
+```{r}
+qbeta(c(0.025, 0.975), 104, 96) # 95% credible interval between 0.45 and 0.59
+```
+
+```{r}
+plot_beta(104, 96) # visualize the distribution
+```
+
+**Likelihood**
+
+The Binomial model for the number of vehicle thefts that took place at night is $Y|\pi \sim Bin(2369, \pi)$. n=2369 because that is the number of rows in our dataset.
+
+```{r}
+nrow(df)
+```
+
+From our data, we observe that Y=1371 of vehicle thefts took place at night.
+
+```{r}
+count_night <- df %>%
+  filter(hour(DateTime) >= 18 | hour(DateTime) < 6) %>%
+  nrow()
+
+count_night
+```
+
+Our likelihood function is $$L(\pi \mid y=1371) = \pi^{1371}(1-\pi)^{2369-1371}$$ \newpage \*\*5. Derive the posterior\*\*
+
+The Beta posterior distribution of $\pi$ after having observed the data is
+
+$$\pi | y \sim Beta (\alpha + y, \beta + n - y) $$ $$\pi | y \sim Beta(104 + 1371, 96 + 2369 - 1371) $$ $$\pi | y \sim Beta(1475, 1094) $$
+
+```{r}
+plot_beta(1475, 1094)
+```
+
+Our posterior distribution has a lot less variance than our prior, and a higher mean and mode.
+
+```{r}
+summarize_beta(1475, 1094)
+```
+
+The mean and mode of the posterior are around 0.57.
+
+```{r}
+plot_beta_binomial(alpha=104, beta=96, y=1371, n=2369)
+```
+
+Because of our large sample size, the posterior is "weighted" more toward the likelihood. In our data we observed a greater $\pi$ compared with our prior, so the mean of the posterior is pulled in the direction of the data.
+
+```{r}
+summarize_beta_binomial(alpha=104, beta=96, y=1371, n=2369)
+```
+
+We confirm that our posterior has a higher mean and mode than our prior. So based on the data we observed, the probability that a vehicle theft occurs at night is higher than we originally thought, around 0.57 compared with 0.52.
+
+**Grid Approximation**
+
+Let's approximate the posterior using grid approximation. First split the continuum of possible $\pi$ values onto a finite grid.
+
+```{r}
+grid_data <- data.frame(pi_grid = seq(from = 0.50, to = 0.60, length = 5))
+grid_data
+```
+
+Encode the Beta(104, 96) prior and Binomial(2369, $\pi$) likelihood with Y=1371 at each $\pi$ in pi_grid.
+
+```{r}
+grid_data <- grid_data %>% 
+  mutate(prior = dbeta(pi_grid, 104, 96),
+         likelihood = dbinom(1371,2369, pi_grid))
+```
+
+Now approximate the posterior.
+
+```{r}
+grid_data <- grid_data %>% 
+  mutate(unnormalized = likelihood * prior,
+         posterior = unnormalized / sum(unnormalized))
+```
+
+The resulting discretized posterior pdf gives us a sense of what the posterior pdf is. It places a roughly 93% chance on $\pi$ being 0.58, and a roughly 100% chance of $\pi$ being 0.55, 0.58, or 0.6.
+
+```{r}
+round(grid_data, 2)
+```
+
+Plot the discretized posterior pdf.
+
+```{r}
+ggplot(grid_data, aes(x = pi_grid, y = posterior)) + 
+  geom_point() + 
+  geom_segment(aes(x = pi_grid, xend = pi_grid, y = 0, yend = posterior))
+```
+
+However, this is an extreme oversimplification of the true Beta posterior. If we were to sample from this posterior, the result would not mimic the shape, location and spread of a smooth pdf. Let's try again with 101 $\pi$ values.
+
+```{r}
+grid_data <- data.frame(pi_grid = seq(from = 0.50, to = 0.60, length = 101))
+```
+
+```{r}
+grid_data <- grid_data %>% 
+  mutate(prior = dbeta(pi_grid, 104, 96),
+         likelihood = dbinom(1371,2369, pi_grid))
+```
+
+```{r}
+grid_data <- grid_data %>% 
+  mutate(unnormalized = likelihood * prior,
+         posterior = unnormalized / sum(unnormalized))
+```
+
+```{r}
+ggplot(grid_data, aes(x = pi_grid, y = posterior)) + 
+  geom_point() + 
+  geom_segment(aes(x = pi_grid, xend = pi_grid, y = 0, yend = posterior))
+```
+
+The resulting discretized posterior is a lot smoother compared with the one with only 6 grid values. Now, let's sample from the discretized posterior.
+
+```{r}
+set.seed(84735)
+
+post_sample <- sample_n(grid_data, size = 10000, 
+                        weight = posterior, replace = TRUE)
+```
+
+```{r}
+quantile(post_sample$pi_grid, c(0.025, 0.975))
+```
+
+```{r}
+ggplot(post_sample, aes(x = pi_grid)) + 
+  geom_histogram(aes(y = after_stat(density)), color = "white", bins=40) + 
+  stat_function(fun = dbeta, args = list(1475, 1094)) + 
+  lims(x = c(0.5, 0.61))
+```
+
+This sample aligns much better with the actual posterior pdf, and we once again conclude that the probability that a vehicle theft occurs at night is around 0.57, with a credible interval between 0.56 and 0.59.
+
+**Comparing Weekends and Weekdays**
+
+Since people's activities tend to be different on weekdays and weekdays, let's compare the distribution of vehicle thefts by those two groups. We use the beta (104, 96) prior.
+
+```{r}
+# find total thefts
+weekend_count <- df %>%
+  filter(wday(DateTime) %in% c(1, 7)) %>%   # Sunday = 1, Saturday = 7
+  nrow()
+
+weekday_count <- df %>%
+  filter(wday(DateTime) %in% 2:6) %>%   # Monday–Friday
+  nrow()
+
+weekend_count
+weekday_count
+```
+
+```{r}
+weekend_night_count <- df %>%
+  filter(
+    (hour(DateTime) >= 18 | hour(DateTime) < 6) &
+    wday(DateTime) %in% c(1, 7)   # Sunday = 1, Saturday = 7
+  ) %>%
+  nrow()
+
+weekday_night_count <- df %>%
+  filter(
+    (hour(DateTime) >= 18 | hour(DateTime) < 6) &
+    wday(DateTime) %in% 2:6   # Monday = 2 ... Friday = 6
+  ) %>%
+  nrow()
+
+weekend_night_count
+weekday_night_count
+```
+
+We observe that 935 out of 1635 weekday vehicle thefts took place at night. 436 out of 734 weekend vehicle thefts took place at night
+
+Update our priors:
+
+$$\pi | y \sim Beta (\alpha + y, \beta + n - y) $$ $$\pi_{weekday} | y_{weekday} \sim Beta (104 + 935, 96 + 1635 - 935) $$ $$\pi_{weekend} | y_{weekend} \sim Beta (104 + 436, 96 + 734 - 436) $$ $$\pi_{weekday} | y_{weekday} \sim Beta (1039, 796) $$ $$\pi_{weekend} | y_{weekend} \sim Beta (540, 394) $$ Plot both posteriors.
+
+```{r}
+ggplot() +
+  stat_function(fun = dbeta, args = list(1039, 796),
+                aes(color = "Weekday"), linewidth = 1) +
+  stat_function(fun = dbeta, args = list(540, 394),
+                aes(color = "Weekend"), linewidth = 1) +
+  labs(
+    title = "Posterior Distributions",
+    x = expression(pi),
+    y = "Density",
+    color = "Group"
+  ) +
+  xlim(0.5, 0.7) +
+  theme_minimal()
+```
+
+Find credible intervals and means:
+
+```{r}
+summary_weekday <- summarize_beta(1039, 796)
+summary_weekday
+```
+
+```{r}
+summary_weekend <- summarize_beta(540, 394)
+summary_weekend
+```
+
+```{r}
+interval_weekday <- qbeta(c(0.025, 0.975), 1039, 796)
+interval_weekday
+```
+
+```{r}
+interval_weekend <- qbeta(c(0.025, 0.975), 540, 394)
+interval_weekend
+```
+
+**Vehicles are slightly stolen more at night**
+
+The posterior means indicate that nighttime vehicle thefts are slightly more likely on weekends (0.578) than on weekdays (0.566). However, the difference is small so while there may be a slight increase in risk on weekends, it is not a dramatic shift. The credible intervals also have significant overlap, so we can infer that the difference is not significant.
+
+Informative results on the distribution of times of vehicle theft could potentially help people protect their personal vehicles by being wary of dangerous times to leave vehicles unlocked or out. Results could also help law enforcement enforce regulations to limit vehicle theft crimes, such as increasing street lighting at especially vulnerable times of day.
+
+With more resources and time, I would like to conduct a deeper analysis of vehicle theft times with 2 time categories, perhaps hour-to-hour or between months. A limitation of my analysis it does not provide detailed insight outside of the proportion of vehicles stolen between 6am and 6pm and outside of that period.
+
+## 2. How many vehicles will be stolen in Chicago?
+
+In this section we will break down our statistical modelling for determining the number of stolen vehicles in Chicago for a new day.
+
+First we read the data set containing all currently reported vehicle thefts since the start of the 2026 year.
+
+```{r}
+df <- read.csv("../data/chicago_vehicle_theft_crimes_2026.csv")
+# mdy_hms handles the string formatting "mm/dd/yyyy hh:mm:ss AM" automatically
+df$Date <- mdy_hms(df$Date)
+# Convert the date to a numeric date since the start of the dataset
+df$day_numeric <- as.numeric(difftime(df$Date, min(df$Date), units = "days"))
+# Convert the numeric dates to discrete numbers 
+# Remove the incomplete current day
+df <- df %>% mutate(day_n = floor(day_numeric)) %>% filter(day_n != 52)
+```
+
+Then grouping the reports by day and counting them, allows us to create a visualization to judge for any noticeable trends to model.
+
+```{r}
+# Aggregate the counts of reported theft cases
+daily_counts <- df %>% group_by(day_n) %>% summarize(theft_count = n())
+# Plot the counts over days to looks for correlation
+ggplot(daily_counts, aes(x = day_n, y = theft_count)) +
+  geom_line(color = "steelblue") +  # Line shows the trend
+  geom_point(color = "darkblue") +  # Points show individual days
+  labs(title = "Daily Frequency of Vehicle Thefts",
+       x = "Day Number",
+       y = "Count of Thefts") +
+  theme_minimal()
+```
+
+Generally from the plot there is no specific trend from day-to-day which makes using an independence assumption more plausible.
+
+Plotting the histograms of the reported numbers will show if mostly the numbers are centered around a similar value.
+
+```{r}
+# Treating all days as independent events we can construct a density plot
+ggplot(daily_counts, aes(x = theft_count)) +
+  geom_histogram(fill = "steelblue", color = "black", binwidth = 3) +
+  labs(title = "Distribution of Daily Theft Counts",
+       x = "Number of Thefts per Day",
+       y = "Counts") +
+  theme_minimal()
+```
+
+Looking at the plot there is relatively high variance in the daily reported number of stolen vehicles in Chicago, however the number is generally centered around the 40-50 range, indicating that on average days have similar numbers of cars stolen.
+
+To model these counts we propose discrete random variables that range from 0 to infinity, which are independent and have the same mean. One type of random variable that can model these conditions is the Poisson random variable
+
+$\text{Let } Y_i\text{ represent the number of car thefts in on a day }i:$
+
+$$Y_i|\lambda \sim Poisson(\lambda)$$
+
+Furthermore the rate of the Poisson random variable can be modeled as a Gamma random variable.
+
+$$ \text{Let }\lambda \text{ represent the daily car theft rate}: $$
+
+$$\lambda \sim Gamma(\alpha, \beta)$$
+
+From research into priors the annual car theft rate in Chicago is 8.25 for every 1000 people. Given that Chicago has a population of around 2.72 million, that leads to 22440 total stolen cars per year in Chicago!
+
+Since we are using the independent and identically distributed assumption for the car theft rate in Chicago, we expect that the expected rate should be close to one 365th of the annual rate, which leads to a rate of 61.44.
+
+For the variance of the rate, the monthly 5 year counts range from 630 to 3186 which translates into an average daily rate range of 21 to 106 and since each month in a 5 year range accounts for one 60th of the data, I suggest that choosing a distribution that has tail probabilities around 0.0166, for either or possibly both tails. However a Gamma distribution is not flexible enough to model all three constraints simultaneously so I decided to only use the left tail probability assumption. In other words the 0.0166th quantile of the prior Gamma distribution should be 21. $\text{From our assumption that the average rate should be 61.44: }$ $$\text{E}(\lambda) = \frac{\alpha}{\beta}= 61.44 $$
+
+$$\beta= \frac{\alpha}{61.44}$$
+
+$$ \text{From the assumption about the 0.0166th quantile being 21:} $$ $$ \text{P}(\lambda \le 21) = 0.0166 $$
+
+$$ \text{Substituting the CDF of a Gamma distribution:} $$
+
+$$ \text{P}(\lambda \le x) = F(x; \alpha, \beta) =\int_{0}^{x} \frac{\beta^\alpha}{\Gamma(\alpha)} t^{\alpha-1} e^{-\beta t} \, dt =   \frac{\gamma(\alpha, \beta x)}{\Gamma(\alpha)} $$
+
+$$ \text{Substituting the contraint from the expectation of a Gamma distribution:} $$
+
+$$ \text{P}(\lambda \le 21) =\frac{\gamma(\alpha, \frac{21}{61.44}\alpha)}{\Gamma(\alpha)} = 0.0166$$
+
+$$ \text{Analytically solving this is difficult so we computationally solve the unique solution for }\alpha :$$
+
+$$ \text{P}(\lambda \le 21) = F(21,\alpha,\frac{\alpha}{61.44}) =  \text{pgamma}(21, \alpha,\frac{\alpha}{61.44}) = 0.0166 $$
+
+$$ \text{Equivalently solving the single root of the funtion } g(\alpha): $$
+
+$$  g(\alpha) = \text{pgamma}(21, \alpha,\frac{\alpha}{61.44}) - 0.0166= 0 $$
+
+In R we can use the uniroot function to computationally solve the root for us:
+
+```{r}
+# Targets for gamma
+target_mean <- 61.44
+target_tail_v <- 21
+target_tail_p <- 1/60
+
+# Defining g(alpha)
+g <- function(alpha) {
+  beta <- alpha / target_mean
+  tail_p <- pgamma(target_tail_v, shape = alpha, rate = beta)
+  return(tail_p - target_tail_p)
+}
+
+# Solving the root of g
+solution <- uniroot(g, lower = 0.01, upper = 100)
+
+# Substituting in the values for alpha and beta
+prior_alpha <- solution$root
+prior_beta <- prior_alpha / target_mean
+
+print(paste("Alpha:", round(prior_alpha, 4)))
+print(paste("Beta:", round(prior_beta, 4)))
+```
+
+Visualizing the constructed prior:
+
+```{r}
+plot_gamma(prior_alpha, prior_beta)
+```
+
+Checking our initial constraint of a mean rate of 61.44
+
+```{r}
+# Get the mean of the distribution
+summarize_gamma(prior_alpha,prior_beta)$mean
+```
+
+and a high enough variance to make rates with smaller than the minimum average rates to not account for more than 0.0166 probability.
+
+```{r}
+# Get the quantiles of the minimum and maximum average rates in the past 5 years
+pgamma(c(21,106),prior_alpha,prior_beta)
+```
+
+Notice that this prior has constrained lower rates more than higher rates, but could have been reversed if there is more belief that rates that are higher than the maximum rate in the past 5 years should be less likely.
+
+Using a gamma-poisson model allows us to make use of a conjugate prior:
+
+```{r}
+total = sum(daily_counts$theft_count)
+days = length(daily_counts$day_n)
+plot_gamma_poisson(prior_alpha,prior_beta, total, days)
+```
+
+resulting in the following posterior:
+
+```{r}
+alpha <- prior_alpha + total
+beta <- prior_beta + days
+plot_gamma(alpha, beta)
+```
+
+```{r}
+summarize_gamma_poisson(prior_alpha, prior_beta, total, days)
+```
+
+Using this we can construct a 95% credible interval for the mean rate for tomorrows car theft rate
+
+```{r}
+qgamma(c(0.025,0.975), alpha, beta)
+```
+
+We can also simulate the actual number stolen tomorrow and construct the predictive interval
+
+```{r}
+set.seed(84735)
+# Simulate 500,000 potential average theft rates
+n_sims <- 500000
+lambda_sims <- rgamma(n_sims, shape = alpha, rate = beta)
+
+# For each lambda, simulate a number of thefts
+predictive_thefts <- rpois(n_sims, lambda = lambda_sims)
+quantile(predictive_thefts, c(0.025, 0.975))
+
+```
+
+With our assumptions, there is a 95% probability that the number of cars stolen tomorrow will be between 33 and 59 inclusive.
+
+```{r}
+predictive_df <- data.frame(thefts = predictive_thefts)
+
+ggplot(predictive_df, aes(x = thefts)) +
+  geom_bar(aes(y = after_stat(count / sum(count))), 
+           fill = "forestgreen", 
+           color = "black") +
+  geom_vline(xintercept = mean(predictive_df$thefts), 
+             color = "red", 
+             linetype = "dashed") +
+  labs(title = "Posterior Predictive Distribution of Daily Thefts",
+       subtitle = "Red dashed line represents the mean predicted daily count",
+       x = "Predicted Number of Thefts",
+       y = "Probability") +
+  theme_minimal()
+```
+
+The constructed posterior predictive distribution seems to be centered at a mode and have slight right skew seen by how the mean is to the right of the mode.
+
+If we wanted to predict the single best number for the number of cars stolen tomorrow the mode of the distribution would be the best estimate.
+
+```{r}
+counts <- count(predictive_df, thefts) %>% mutate(p = n/n_sims)
+counts[which.max(counts$n),]
+```
+
+The most likely value is 45 with a probability of 0.058756.
+
+```{r}
+summary(predictive_df)
+```
+
+On average we should see the rate of 45.57 cars stolen per night and a 50% chance of having less than or equal to 45 cars stolen.

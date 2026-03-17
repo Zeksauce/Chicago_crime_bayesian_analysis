@@ -24,7 +24,7 @@ We will explore the subquestion: What is the probability that a vehicle theft in
 Read in the Chicago crime dataset. The data has already been filtered to only include vehicle thefts in 2026, since that is our subject of interest. Each row has a unique ID and case number, and the rest of the columns contain other details about the crime.
 
 ```{r}
-df <- read.csv("../data/chicago_vehicle_theft_crimes_2026.csv")
+df <- read.csv("../../data/chicago_vehicle_theft_crimes_2026.csv")
 
 # add a column converting Date to DateTime
 df <- df %>%
