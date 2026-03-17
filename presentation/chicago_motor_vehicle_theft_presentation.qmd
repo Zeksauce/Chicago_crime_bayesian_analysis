@@ -11,26 +11,20 @@ format: revealjs
 -   People are skeptical about leaving things in the car, but what about the car itself?
 -   Chicago being one of the most crime ridden cities in the US makes a good worst-case benchmark for the nation
 
-## Bullets
+## Breakdown of Research Question
 
-When you click the **Render** button a document will be generated that includes:
+To explore the susceptibility of vehicles in Chicago we investigate the following:
 
--   Content authored with markdown
--   Output from executable code
-
-## Code
-
-When you click the **Render** button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:
-
-```{r}
-1 + 1
-```
+1.  When are the vehicles stolen?
+2.  How many vehicles are stolen?
+3.  Which communities will have a vehicle stolen from it?
+4.  Which communities have the highest arrest rates for vehicle thefts?
 
 ## 1. Exploring Times of Vehicle Theft
 
 What is the probability that a vehicle theft in Chicago occurs at night? (night = between 6pm and 6am)
 
-::: {.fragment}
+::: fragment
 ```{r}
 library(readr)
 library(bayesrules)
@@ -61,9 +55,8 @@ df %>%
 
 ## Prior
 
-- Source: FBI National Incident-Based Reporting System
-- 52.4% out of 750,000 vehicle thefts in 2024 occurred between 6pm and 6am
-$$\pi \sim Beta(104, 96)$$
+-   Source: FBI National Incident-Based Reporting System
+-   52.4% out of 750,000 vehicle thefts in 2024 occurred between 6pm and 6am $$\pi \sim Beta(104, 96)$$
 
 ## Likelihood
 
@@ -78,10 +71,12 @@ count_night <- df %>%
 
 count_night
 ```
-- Likelihood: y ~ Binomial(n, π)
-- n = 2369, y = 1371
+
+-   Likelihood: y \~ Binomial(n, π)
+-   n = 2369, y = 1371
 
 ## Posterior Approximation of π
+
 ```{r}
 grid_data <- data.frame(pi_grid = seq(from = 0.50, to = 0.61, length = 101))
 grid_data <- grid_data %>% 
@@ -110,12 +105,13 @@ ggplot(post_sample, aes(x = pi_grid)) +
   stat_function(fun = dbeta, args = list(1475, 1094)) + 
   lims(x = c(0.5, 0.61))
 ```
+
 ```{r echo=TRUE}
 mean(post_sample$pi_grid)
 quantile(post_sample$pi_grid, c(0.025, 0.975))
 ```
 
-## Conclusion
+## First Conclusion
 
 $\pi | y = 0.574$
 
@@ -123,12 +119,18 @@ The probability that a vehicle theft occurs at night is approximately 0.574
 
 ## Fighting Crime with Bayesian Analysis
 
-(delete this later) Who will these results help in the future and how? 
+(delete this later) Who will these results help in the future and how?
 
-1. Help people protect their personal vehicles by being aware of dangerous times to leave vehicles unlocked or out. Help law enforcement enforce regulations to limit vehicle theft, such as increasing street lighting.
+1.  Help people protect their personal vehicles by being aware of dangerous times to leave vehicles unlocked or out.
+
+2.  Help law enforcement enforce regulations to limit vehicle theft, such as increasing street lighting.
+
+3.  Inform car insurance companies about risk especially in Chicago
 
 ## Limitations + Next Steps
 
 (delete this later) If you had all the resources in the world and unlimited time what would you do on this topic? What are the limitations of the analysis you have done that you could correct in the future with unlimited resources?
 
-1. No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis.
+1.  No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis.
+
+2.  Investigate the number of stolen vehicles within each sector of the city for a given day with a hierarchical model

@@ -6,8 +6,8 @@
 <script src="chicago_motor_vehicle_theft_presentation_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="chicago_motor_vehicle_theft_presentation_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="chicago_motor_vehicle_theft_presentation_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="chicago_motor_vehicle_theft_presentation_files/libs/quarto-html/quarto-syntax-highlighting-46f66b053e56abd73bb6e954d61a315b.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.35">
+<link href="chicago_motor_vehicle_theft_presentation_files/libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.8.25">
 
   <meta name="author" content="Thuy, Trian, Puru, Zac">
   <title>Chicago Motor Vehicle Theft Analysis</title>
@@ -17,9 +17,6 @@
   <link rel="stylesheet" href="chicago_motor_vehicle_theft_presentation_files/libs/revealjs/dist/reset.css">
   <link rel="stylesheet" href="chicago_motor_vehicle_theft_presentation_files/libs/revealjs/dist/reveal.css">
   <style>
-    /* Default styles provided by pandoc.
-    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-    */
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
     div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -98,7 +95,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="chicago_motor_vehicle_theft_presentation_files/libs/revealjs/dist/theme/quarto-2740581606dc327e82f18f789b69d8a0.css">
+  <link rel="stylesheet" href="chicago_motor_vehicle_theft_presentation_files/libs/revealjs/dist/theme/quarto-534cd8e3a96973385dffff3f4709048d.css">
   <link href="chicago_motor_vehicle_theft_presentation_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="chicago_motor_vehicle_theft_presentation_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="chicago_motor_vehicle_theft_presentation_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -216,22 +213,15 @@ Thuy, Trian, Puru, Zac
 <li>Chicago being one of the most crime ridden cities in the US makes a good worst-case benchmark for the nation</li>
 </ul>
 </section>
-<section id="bullets" class="slide level2">
-<h2>Bullets</h2>
-<p>When you click the <strong>Render</strong> button a document will be generated that includes:</p>
-<ul>
-<li>Content authored with markdown</li>
-<li>Output from executable code</li>
-</ul>
-</section>
-<section id="code" class="slide level2">
-<h2>Code</h2>
-<p>When you click the <strong>Render</strong> button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:</p>
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 2</code></pre>
-</div>
-</div>
+<section id="breakdown-of-research-question" class="slide level2">
+<h2>Breakdown of Research Question</h2>
+<p>To explore the susceptibility of vehicles in Chicago we investigate the following:</p>
+<ol type="1">
+<li>When are the vehicles stolen?</li>
+<li>How many vehicles are stolen?</li>
+<li>Which communities will have a vehicle stolen from it?</li>
+<li>Which communities have the highest arrest rates for vehicle thefts?</li>
+</ol>
 </section>
 <section id="exploring-times-of-vehicle-theft" class="slide level2">
 <h2>1. Exploring Times of Vehicle Theft</h2>
@@ -241,7 +231,7 @@ Thuy, Trian, Puru, Zac
 <div class="cell-output-display">
 <div>
 <figure>
-<p><img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-2-1.png" width="960"></p>
+<p><img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-1-1.png" width="960"></p>
 </figure>
 </div>
 </div>
@@ -258,17 +248,17 @@ Thuy, Trian, Puru, Zac
 <section id="likelihood" class="slide level2">
 <h2>Likelihood</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">nrow</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">nrow</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 2369</code></pre>
 </div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a>count_night <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
-<span id="cb4-2"><a href=""></a>  <span class="fu">filter</span>(<span class="fu">hour</span>(DateTime) <span class="sc">&gt;=</span> <span class="dv">18</span> <span class="sc">|</span> <span class="fu">hour</span>(DateTime) <span class="sc">&lt;</span> <span class="dv">6</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb4-3"><a href=""></a>  <span class="fu">nrow</span>()</span>
-<span id="cb4-4"><a href=""></a></span>
-<span id="cb4-5"><a href=""></a>count_night</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>count_night <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb3-2"><a href=""></a>  <span class="fu">filter</span>(<span class="fu">hour</span>(DateTime) <span class="sc">&gt;=</span> <span class="dv">18</span> <span class="sc">|</span> <span class="fu">hour</span>(DateTime) <span class="sc">&lt;</span> <span class="dv">6</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-3"><a href=""></a>  <span class="fu">nrow</span>()</span>
+<span id="cb3-4"><a href=""></a></span>
+<span id="cb3-5"><a href=""></a>count_night</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 1371</code></pre>
 </div>
@@ -281,24 +271,24 @@ Thuy, Trian, Puru, Zac
 <section id="posterior-approximation-of-π" class="slide level2">
 <h2>Posterior Approximation of π</h2>
 
-<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-5-1.png" width="960" class="r-stretch"></section>
+<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-4-1.png" width="960" class="r-stretch"></section>
 <section id="posterior-simulation-of-π" class="slide level2">
 <h2>Posterior Simulation of π</h2>
 
-<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-6-1.png" width="960" class="r-stretch"><div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">mean</span>(post_sample<span class="sc">$</span>pi_grid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-5-1.png" width="960" class="r-stretch"><div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">mean</span>(post_sample<span class="sc">$</span>pi_grid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.5742616</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">quantile</span>(post_sample<span class="sc">$</span>pi_grid, <span class="fu">c</span>(<span class="fl">0.025</span>, <span class="fl">0.975</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">quantile</span>(post_sample<span class="sc">$</span>pi_grid, <span class="fu">c</span>(<span class="fl">0.025</span>, <span class="fl">0.975</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  2.5%  97.5% 
 0.5550 0.5935 </code></pre>
 </div>
 </div>
 </section>
-<section id="conclusion" class="slide level2">
-<h2>Conclusion</h2>
+<section id="first-conclusion" class="slide level2">
+<h2>First Conclusion</h2>
 <p><span class="math inline">\(\pi | y = 0.574\)</span></p>
 <p>The probability that a vehicle theft occurs at night is approximately 0.574</p>
 </section>
@@ -306,14 +296,17 @@ Thuy, Trian, Puru, Zac
 <h2>Fighting Crime with Bayesian Analysis</h2>
 <p>(delete this later) Who will these results help in the future and how?</p>
 <ol type="1">
-<li>Help people protect their personal vehicles by being aware of dangerous times to leave vehicles unlocked or out. Help law enforcement enforce regulations to limit vehicle theft, such as increasing street lighting.</li>
+<li><p>Help people protect their personal vehicles by being aware of dangerous times to leave vehicles unlocked or out.</p></li>
+<li><p>Help law enforcement enforce regulations to limit vehicle theft, such as increasing street lighting.</p></li>
+<li><p>Inform car insurance companies about risk especially in Chicago</p></li>
 </ol>
 </section>
 <section id="limitations-next-steps" class="slide level2">
 <h2>Limitations + Next Steps</h2>
 <p>(delete this later) If you had all the resources in the world and unlimited time what would you do on this topic? What are the limitations of the analysis you have done that you could correct in the future with unlimited resources?</p>
 <ol type="1">
-<li>No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis.</li>
+<li><p>No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis.</p></li>
+<li><p>Investigate the number of stolen vehicles within each sector of the city for a given day with a hierarchical model</p></li>
 </ol>
 
 </section>
