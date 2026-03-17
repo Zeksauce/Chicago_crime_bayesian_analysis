@@ -18,7 +18,7 @@ To explore the susceptibility of vehicles in Chicago we investigate the followin
 1.  When are the vehicles stolen?
 2.  How many vehicles are stolen?
 3.  Which communities will have a vehicle stolen from it?
-4.  Which communities have the highest arrest rates for vehicle thefts?
+4.  Do communities have the different arrest rates for vehicle thefts?
 
 ## 1. Exploring Times of Vehicle Theft
 
