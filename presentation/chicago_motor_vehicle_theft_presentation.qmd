@@ -6,7 +6,7 @@ format: revealjs
 
 ## Are vehicles in Chicago susceptible targets of crime?
 
--   Nationally 1 million vehicles are stolen annually.
+-   Nationally 1 million vehicles are stolen annually
 -   On average 3 out of 1000 people will have their car stolen this year
 -   People are skeptical about leaving things in the car, but what about the car itself?
 -   Chicago being one of the most crime ridden cities in the US makes a good worst-case benchmark for the nation
@@ -117,13 +117,120 @@ $\pi | y = 0.574$
 
 The probability that a vehicle theft occurs at night is approximately 0.574
 
+## 2. Exploring the counts of stolen vehicles
+
+Looking at the data from the first 52 days of the year, how many vehicles will be stolen tomorrow?
+
+```{r}
+df <- read.csv("../data/chicago_vehicle_theft_crimes_2026.csv")
+# mdy_hms handles the string formatting "mm/dd/yyyy hh:mm:ss AM" automatically
+df$Date <- mdy_hms(df$Date)
+# Convert the date to a numeric date since the start of the dataset
+df$day_numeric <- as.numeric(difftime(df$Date, min(df$Date), units = "days"))
+# Convert the numeric dates to discrete numbers 
+# Remove the incomplete current day
+df <- df %>% mutate(day_n = floor(day_numeric)) %>% filter(day_n != 52)
+# Aggregate the counts of reported theft cases
+daily_counts <- df %>% group_by(day_n) %>% summarize(theft_count = n())
+# Plot the counts over days to looks for correlation
+ggplot(daily_counts, aes(x = day_n, y = theft_count)) +
+  geom_line(color = "steelblue") +  # Line shows the trend
+  geom_point(color = "darkblue") +  # Points show individual days
+  labs(title = "Daily Frequency of Vehicle Thefts",
+       x = "Day Number",
+       y = "Count of Thefts") +
+  theme_minimal()
+```
+
+## Assumptions
+
+From the plot the counts don't seem to follow a trend, so we assume that:
+
+-   The number of cars stolen on days are independent
+
+-   Can be modeled using an identical poisson distribution with an average rate parameter $\lambda$
+
+    $$
+    Y_i|\lambda \sim Poisson(\lambda)
+    $$
+
+-   The rate can be modeled using a Gamma distribution
+
+    $$
+    \lambda|Y\sim Gamma(\alpha,\beta)
+    $$
+
+## Gamma Prior for $\lambda$
+
+-   Annual car theft rate in Chicago is 8.25 for every 1000 people
+
+-   Total of 22,440 total stolen cars per year in Chicago, an average daily rate of 61.44
+
+-   For the variance of the rate, the monthly 5 year counts range from 630 to 3186
+
+-   A average daily rate range of 21 to 106 from which we can construct a prior
+
+    $$
+    Gamma(6.2116,0.1011)
+    $$
+
+## Likelihood and Posterior
+
+Using the gamma-poisson model makes use of the gamma conjugate prior resulting in the following posterior:
+
+$$
+Gamma(6.2116 + \Sigma y_i,0.1011+n) = Gamma(2373.2116, 52.1011)
+$$
+
+```{r}
+plot_gamma_poisson(6.2116,0.1011, 2367, 52)
+```
+
+## Posterior Predictive Interval
+
+From the posterior we can estimate the actual number of cars stolen tomorrow
+
+```{r}
+set.seed(84735)
+# Simulate 500,000 potential average theft rates
+n_sims <- 500000
+lambda_sims <- rgamma(n_sims, shape = 2373.2116, rate = 52.1011)
+
+# For each lambda, simulate a number of thefts
+predictive_thefts <- rpois(n_sims, lambda = lambda_sims)
+quantile(predictive_thefts, c(0.025, 0.975))
+```
+
+With 95% probability a number between 33 and 59 cars will be stolen.
+
+## Posterior Predictive Distribution
+
+```{r}
+predictive_df <- data.frame(thefts = predictive_thefts)
+
+ggplot(predictive_df, aes(x = thefts)) +
+  geom_bar(aes(y = after_stat(count / sum(count))), 
+           fill = "forestgreen", 
+           color = "black") +
+  geom_vline(xintercept = mean(predictive_df$thefts), 
+             color = "red", 
+             linetype = "dashed") +
+  labs(title = "Posterior Predictive Distribution of Daily Thefts",
+       subtitle = "Red dashed line represents the mean predicted daily count",
+       x = "Predicted Number of Thefts",
+       y = "Probability") +
+  theme_minimal()
+```
+
+The most likely value is 45 with a probability of 0.059. On average we should see the rate of 45.57 cars stolen per night and a 50% chance of having less than or equal to 45 cars stolen.
+
 ## Fighting Crime with Bayesian Analysis
 
 (delete this later) Who will these results help in the future and how?
 
-1.  Help people protect their personal vehicles by being aware of dangerous times to leave vehicles unlocked or out.
+1.  Help people protect their personal vehicles by being aware of dangerous times to leave vehicles unlocked or out
 
-2.  Help law enforcement enforce regulations to limit vehicle theft, such as increasing street lighting.
+2.  Help law enforcement enforce regulations to limit vehicle theft, such as increasing street lighting
 
 3.  Inform car insurance companies about risk especially in Chicago
 
@@ -131,6 +238,6 @@ The probability that a vehicle theft occurs at night is approximately 0.574
 
 (delete this later) If you had all the resources in the world and unlimited time what would you do on this topic? What are the limitations of the analysis you have done that you could correct in the future with unlimited resources?
 
-1.  No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis.
+1.  No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis
 
 2.  Investigate the number of stolen vehicles within each sector of the city for a given day with a hierarchical model

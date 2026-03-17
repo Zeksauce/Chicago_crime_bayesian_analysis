@@ -207,7 +207,7 @@ Thuy, Trian, Puru, Zac
 <section id="are-vehicles-in-chicago-susceptible-targets-of-crime" class="slide level2">
 <h2>Are vehicles in Chicago susceptible targets of crime?</h2>
 <ul>
-<li>Nationally 1 million vehicles are stolen annually.</li>
+<li>Nationally 1 million vehicles are stolen annually</li>
 <li>On average 3 out of 1000 people will have their car stolen this year</li>
 <li>People are skeptical about leaving things in the car, but what about the car itself?</li>
 <li>Chicago being one of the most crime ridden cities in the US makes a good worst-case benchmark for the nation</li>
@@ -220,7 +220,7 @@ Thuy, Trian, Puru, Zac
 <li>When are the vehicles stolen?</li>
 <li>How many vehicles are stolen?</li>
 <li>Which communities will have a vehicle stolen from it?</li>
-<li>Which communities have the highest arrest rates for vehicle thefts?</li>
+<li>Do communities have the different arrest rates for vehicle thefts?</li>
 </ol>
 </section>
 <section id="exploring-times-of-vehicle-theft" class="slide level2">
@@ -292,12 +292,68 @@ Thuy, Trian, Puru, Zac
 <p><span class="math inline">\(\pi | y = 0.574\)</span></p>
 <p>The probability that a vehicle theft occurs at night is approximately 0.574</p>
 </section>
+<section id="exploring-the-counts-of-stolen-vehicles" class="slide level2">
+<h2>2. Exploring the counts of stolen vehicles</h2>
+<p>Looking at the data from the first 52 days of the year, how many vehicles will be stolen tomorrow?</p>
+
+<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-7-1.png" width="960" class="r-stretch"></section>
+<section id="assumptions" class="slide level2">
+<h2>Assumptions</h2>
+<p>From the plot the counts don’t seem to follow a trend, so we assume that:</p>
+<ul>
+<li><p>The number of cars stolen on days are independent</p></li>
+<li><p>Can be modeled using an identical poisson distribution with an average rate parameter <span class="math inline">\(\lambda\)</span></p>
+<p><span class="math display">\[
+Y_i|\lambda \sim Poisson(\lambda)
+\]</span></p></li>
+<li><p>The rate can be modeled using a Gamma distribution</p>
+<p><span class="math display">\[
+\lambda|Y\sim Gamma(\alpha,\beta)
+\]</span></p></li>
+</ul>
+</section>
+<section id="gamma-prior-for-lambda" class="slide level2">
+<h2>Gamma Prior for <span class="math inline">\(\lambda\)</span></h2>
+<ul>
+<li><p>Annual car theft rate in Chicago is 8.25 for every 1000 people</p></li>
+<li><p>Total of 22,440 total stolen cars per year in Chicago, an average daily rate of 61.44</p></li>
+<li><p>For the variance of the rate, the monthly 5 year counts range from 630 to 3186</p></li>
+<li><p>A average daily rate range of 21 to 106 from which we can construct a prior</p>
+<p><span class="math display">\[
+Gamma(6.2116,0.1011)
+\]</span></p></li>
+</ul>
+</section>
+<section id="likelihood-and-posterior" class="slide level2">
+<h2>Likelihood and Posterior</h2>
+<p>Using the gamma-poisson model makes use of the gamma conjugate prior resulting in the following posterior:</p>
+<p><span class="math display">\[
+Gamma(6.2116 + \Sigma y_i,0.1011+n) = Gamma(2373.2116, 52.1011)
+\]</span></p>
+
+<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-8-1.png" width="960" class="r-stretch"></section>
+<section id="posterior-predictive-interval" class="slide level2">
+<h2>Posterior Predictive Interval</h2>
+<p>From the posterior we can estimate the actual number of cars stolen tomorrow</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code> 2.5% 97.5% 
+   33    59 </code></pre>
+</div>
+</div>
+<p>With 95% probability a number between 33 and 59 cars will be stolen.</p>
+</section>
+<section id="posterior-predictive-distribution" class="slide level2">
+<h2>Posterior Predictive Distribution</h2>
+
+<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-10-1.png" width="960" class="r-stretch"><p>The most likely value is 45 with a probability of 0.059. On average we should see the rate of 45.57 cars stolen per night and a 50% chance of having less than or equal to 45 cars stolen.</p>
+</section>
 <section id="fighting-crime-with-bayesian-analysis" class="slide level2">
 <h2>Fighting Crime with Bayesian Analysis</h2>
 <p>(delete this later) Who will these results help in the future and how?</p>
 <ol type="1">
-<li><p>Help people protect their personal vehicles by being aware of dangerous times to leave vehicles unlocked or out.</p></li>
-<li><p>Help law enforcement enforce regulations to limit vehicle theft, such as increasing street lighting.</p></li>
+<li><p>Help people protect their personal vehicles by being aware of dangerous times to leave vehicles unlocked or out</p></li>
+<li><p>Help law enforcement enforce regulations to limit vehicle theft, such as increasing street lighting</p></li>
 <li><p>Inform car insurance companies about risk especially in Chicago</p></li>
 </ol>
 </section>
@@ -305,7 +361,7 @@ Thuy, Trian, Puru, Zac
 <h2>Limitations + Next Steps</h2>
 <p>(delete this later) If you had all the resources in the world and unlimited time what would you do on this topic? What are the limitations of the analysis you have done that you could correct in the future with unlimited resources?</p>
 <ol type="1">
-<li><p>No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis.</p></li>
+<li><p>No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis</p></li>
 <li><p>Investigate the number of stolen vehicles within each sector of the city for a given day with a hierarchical model</p></li>
 </ol>
 
