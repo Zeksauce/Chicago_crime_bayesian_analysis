@@ -1,9 +1,7 @@
 ---
-title: "Chicago_motor_theft_report"
+title: "Are vehicles in Chicago susceptible targets of crime?"
 format: html
 ---
-
-# Are vehicles in Chicago susceptible targets of crime?
 
 This report outlines the source code that was used to determine the susceptibility of vehicles in Chicago.
 
@@ -21,7 +19,10 @@ library(bayesrules)
 library(tidyverse)
 library(dplyr)
 library(ggplot2)
+library(reshape2)
 library(lubridate)
+library(scales)
+library(knitr)
 ```
 
 ## 1. When are vehicles stolen?
@@ -59,8 +60,6 @@ df %>%
 ```
 
 We see that car thefts generally tend to be more common at night, between 6pm and up until 3am. Indeed, the volume of the blue columns outweighs the pink columns. So we know $\pi$ will likely be greater than 0.5. But by how much?
-
-\newpage
 
 **Building a prior**
 
@@ -100,7 +99,9 @@ count_night <- df %>%
 count_night
 ```
 
-Our likelihood function is $$L(\pi \mid y=1371) = \pi^{1371}(1-\pi)^{2369-1371}$$ \newpage \*\*5. Derive the posterior\*\*
+Our likelihood function is $$L(\pi \mid y=1371) = \pi^{1371}(1-\pi)^{2369-1371}$$
+
+**Derive the posterior**
 
 The Beta posterior distribution of $\pi$ after having observed the data is
 
@@ -340,11 +341,11 @@ $$\lambda \sim Gamma(\alpha, \beta)$$
 
 **Defining a Prior**
 
-From research into priors the annual car theft rate in Chicago is 8.25 for every 1000 people. Given that Chicago has a population of around 2.72 million, that leads to 22440 total stolen cars per year in Chicago!
+From research into priors the annual car theft rate in Chicago is 8.25 for every 1000 people. Given that Chicago has a population of around 2.72 million, that leads to 22440 total stolen cars per year in Chicago! (Insurance Information Institute)
 
 Since we are using the independent and identically distributed assumption for the car theft rate in Chicago, we expect that the expected rate should be close to one 365th of the annual rate, which leads to a rate of 61.44.
 
-For the variance of the rate, the monthly 5 year counts range from 630 to 3186 which translates into an average daily rate range of 21 to 106 and since each month in a 5 year range accounts for one 60th of the data, I suggest that choosing a distribution that has tail probabilities around 0.0166, for either or possibly both tails. However a Gamma distribution is not flexible enough to model all three constraints simultaneously so I decided to only use the left tail probability assumption. In other words the 0.0166th quantile of the prior Gamma distribution should be 21.
+For the variance of the rate, the monthly 5 year counts range from 630 to 3186 which translates into an average daily rate range of 21 to 106 and since each month in a 5 year range accounts for one 60th of the data, I suggest that choosing a distribution that has tail probabilities around 0.0166, for either or possibly both tails (City of Chicago). However a Gamma distribution is not flexible enough to model all three constraints simultaneously so I decided to only use the left tail probability assumption. In other words the 0.0166th quantile of the prior Gamma distribution should be 21.
 
 $$\text{From our assumption that the average rate should be 61.44: }$$
 
@@ -500,7 +501,468 @@ summary(predictive_df)
 
 On average we should see the rate of 45.57 cars stolen per night and a 50% chance of having less than or equal to 45 cars stolen.
 
-# {Thuy's part}
+## 3. Which Chicago community areas have the highest probability of at least one motor vehicle theft tomorrow?
+
+The dataset consists of reported motor vehicle theft incidents in Chicago during 2026, obtained from the Chicago crime data portal. Each row corresponds to a single reported theft. For the purposes of this analysis, the data were aggregated to obtain the number of theft incidents per community area per day. This allows us to model theft counts as daily events occurring within each neighborhood.
+
+**Model Specification**
+
+Let $Y_{jt}$ denote the number of motor vehicle theft incidents in community area $j$ on day $t$.
+
+We model the number of thefts using a Poisson distribution:
+
+$$
+Y_{jt} \sim \text{Poisson}(\lambda_j)
+$$
+
+where $\lambda_j$ represents the average daily motor vehicle theft rate in community area $j$.
+
+To complete the Bayesian model, we specify a prior distribution for the unknown daily motor vehicle theft rate in each community area.
+
+Let $\lambda_j$ represent the average number of motor vehicle theft incidents per day in community area $j$. Because theft counts are modeled using a Poisson likelihood, we use a Gamma prior for $\lambda_j$:
+
+$$
+\lambda_j \sim \text{Gamma}(\alpha, \beta)
+$$
+
+The Gamma distribution is chosen because it is conjugate to the Poisson likelihood. This conjugacy allows the posterior distribution to be obtained analytically and simplifies computation.
+
+**Prior Evidence**
+
+Historical motor vehicle theft data from the Chicago offense dashboard indicate that in **June 2025 there were 1,473 reported motor vehicle theft incidents**, which corresponds to approximately **49 incidents per day citywide**. Since Chicago contains **77 community areas**, a rough baseline rate for a typical community area is:
+
+$$
+\frac{49}{77} \approx 0.64
+$$
+
+motor vehicle theft incidents per day.
+
+To incorporate this information while maintaining substantial uncertainty, we use the prior
+
+$$
+\lambda_j \sim \text{Gamma}(2,\frac{2}{0.64})
+$$
+
+This prior has mean
+
+$$
+E(\lambda_j) = \frac{\alpha}{\beta} = 0.64
+$$
+
+which reflects the approximate historical daily theft rate for a typical neighborhood while still allowing the observed 2026 data to strongly influence the posterior distribution.
+
+**Posterior Distribution**
+
+Let $Y_{jt}$ denote the number of motor vehicle theft incidents observed in community area $j$ on day $t$. We assume that theft counts follow a Poisson distribution:
+
+$$
+Y_{jt} \sim \text{Poisson}(\lambda_j)
+$$
+
+where $\lambda_j$ represents the average daily motor vehicle theft rate in community area $j$.
+
+Suppose that across $T$ observed days in 2026 we observe a total of $y_j$ theft incidents in community area $j$.
+
+Given the Poisson likelihood and the Gamma prior
+
+$$
+\lambda_j \sim \text{Gamma}(\alpha,\beta)
+$$
+
+the posterior distribution is also a Gamma distribution:
+
+$$
+\lambda_j \mid data \sim \text{Gamma}(\alpha + y_j,\ \beta + T)
+$$
+
+This posterior distribution represents our updated belief about the daily motor vehicle theft rate in community area $j$ after incorporating the observed 2026 theft data.
+
+The posterior mean of the theft rate is therefore
+
+$$
+E(\lambda_j \mid data) = \frac{\alpha + y_j}{\beta + T}
+$$
+
+which balances the historical prior information with the observed theft counts. Community areas with larger observed theft counts will have higher posterior rate estimates, while areas with fewer observations will be partially stabilized by the prior distribution.
+
+**Data Summary**
+
+The dataset contains reported motor vehicle theft incidents in Chicago from **January 1, 2026 to February 22, 2026**, covering a total of **53 days** of observations.
+
+For each community area, we aggregate the data to obtain the number of theft incidents occurring on each day. This produces daily theft counts that can be modeled as event counts over time.
+
+```{r loaddata}
+# load data
+crime <- read_csv("../data/chicago_vehicle_theft_crimes_2026.csv")
+
+glimpse(crime)
+```
+
+```{r clean-date}
+# clean date column for a daily date variable 
+crime <- crime %>%
+  mutate(
+    date_time = mdy_hms(Date),
+    day = as_date(date_time),
+    community_area = `Community Area`
+  )
+
+crime %>%
+  select(Date, date_time, day, community_area) %>%
+  head()
+```
+
+```{r agreegate-counts}
+# Compute number of thefts per day in each area
+daily_counts <- crime %>%
+  filter(!is.na(community_area)) %>%
+  group_by(community_area, day) %>%
+  summarise(thefts = n(), .groups = "drop")
+
+daily_counts %>% head(10)
+```
+
+```{r complete-grid}
+# If a neighborhood had no theft on a certain day, that day still counts. Otherwise our daily rate will be too high.
+
+# So we build a full grid of all community areas × all days.
+
+all_days <- seq(min(crime$day, na.rm = TRUE), max(crime$day, na.rm = TRUE), by = "day")
+
+all_areas <- crime %>%
+  filter(!is.na(community_area)) %>%
+  distinct(community_area)
+
+daily_complete <- expand_grid(
+  community_area = all_areas$community_area,
+  day = all_days
+) %>%
+  left_join(daily_counts, by = c("community_area", "day")) %>%
+  mutate(thefts = replace_na(thefts, 0))
+
+daily_complete %>% head(10)
+```
+
+```{r summarize-area}
+# Compute total thefts and observed days for each area
+area_summary <- daily_complete %>%
+  group_by(community_area) %>%
+  summarise(
+    total_thefts = sum(thefts),
+    days_observed = n(),
+    sample_daily_mean = mean(thefts),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(total_thefts))
+
+area_summary %>% head(10)
+```
+
+**Prior**
+
+From our source:
+
+-   June 2025 had **1,473 incidents**
+-   about **49 incidents per day citywide**
+
+If we spread that across community areas as a rough baseline:
+
+\[ 49 / 77 \approx 0.64 \]
+
+So a reasonable weak prior for a typical community area’s daily theft rate is:
+
+\[ \lambda\_j \sim Gamma(2, 2/0.64) \]
+
+This prior has mean:
+
+\[ \frac{2}{2/0.64} = 0.64 \]
+
+```{r plot-prior}
+# plot gamma prior
+plot_gamma(shape = 2, rate = 2/0.64)
+```
+
+Figure 1. Plot for gamma prior
+
+**Posterior Model**
+
+\[ Y\_{jt} \sim \text{Poisson}(\lambda\_j) \]
+
+with prior:
+
+\[ \lambda\_j \sim \text{Gamma}(\alpha,\beta) \]
+
+Then posterior:
+
+\[ \lambda\_j \mid \text{data} \sim \text{Gamma}(\alpha + y_j, \beta + T) \]
+
+where:
+
+-   (y_j) = total thefts in area (j)
+-   \(T\) = number of observed days
+
+```{r posterior}
+# Based on prior and data, compute posterior daily theft rate for each community area
+alpha <- 2
+beta <- 2/0.64
+posterior_summary <- area_summary %>%
+  mutate(
+    post_alpha = alpha + total_thefts,
+    post_beta = beta + days_observed,
+    posterior_mean = post_alpha / post_beta,
+    ci_80_lower = qgamma(0.10, shape = post_alpha, rate = post_beta),
+    ci_80_upper = qgamma(0.90, shape = post_alpha, rate = post_beta),
+    ci_95_lower = qgamma(0.025, shape = post_alpha, rate = post_beta),
+    ci_95_upper = qgamma(0.975, shape = post_alpha, rate = post_beta)
+  ) %>%
+  arrange(desc(posterior_mean))
+
+posterior_summary %>%
+  select(community_area, total_thefts, days_observed, posterior_mean,
+         ci_80_lower, ci_80_upper) %>%
+  head(10)
+```
+
+The posterior estimates show substantial variation in daily motor vehicle theft rates across Chicago communnity areas. Using the Gamma–Poisson model with a prior informed by historical Chicago theft trends, we estimated the posterior daily theft rate for each community area based on the 53 days of observed data in 2026.For example, community area 28 had the highest posterior mean daily theft rate. Across the 53 observed days, this area experienced 131 theft incidents, corresponding to an estimated posterior mean of 2.37 thefts per day. Additionally, given the model and the data, there is an 80% probability that the true average daily theft rate in this area lies between approximately 2.11 and 2.64 thefts per day.
+
+An example posterior plot:
+
+```{r plot-posterior}
+# Prior
+alpha <- 2
+beta <- 2 / 0.64
+
+# Data for Area 28
+T_days <- 53
+y_28 <- 131
+
+plot_gamma_poisson(
+  shape = alpha,
+  rate = beta,
+  n = T_days,
+  sum_y = y_28
+)
+```
+
+Figure 2. Posterior distribution for community area 28
+
+For area 28, the posterior distribution is shifted noticeably to the right of the prior, indicating that the observed 2026 data suggest a higher daily theft rate than the baseline prior expectation. The posterior is also narrower than the prior, showing that the 53 days of observed data reduce uncertainty about the true rate.
+
+These posterior rate estimates are then used to generate posterior predictive simulations for tomorrow’s theft counts. From these simulations, we compute the probability that at least one theft occurs in each community area tomorrow, allowing us to identify neighborhoods with the highest short-term risk of motor vehicle theft.
+
+**Predictive Simulation**
+
+While the posterior distribution describes the uncertainty in the underlying theft rate $\lambda_j$, our primary goal is to predict future theft incidents.
+
+Let
+
+$$
+Y_{j,\text{tomorrow}}
+$$
+
+denote the number of motor vehicle theft incidents that occur tomorrow in community area $j$.
+
+The posterior predictive distribution is defined as
+
+$$
+P(Y_{j,\text{tomorrow}} \mid data)
+$$
+
+which integrates over the uncertainty in the theft rate parameter $\lambda_j$.
+
+To approximate this distribution, we use simulation:
+
+1.  Draw $\lambda_j$ from the posterior distribution
+2.  Simulate a theft count from a Poisson distribution with rate $\lambda_j$
+3.  Repeat this process many times
+
+This produces simulated values of $Y_{j,\text{tomorrow}}$ that approximate the posterior predictive distribution.
+
+A useful risk measure derived from this distribution is
+
+$$
+P(Y_{j,\text{tomorrow}} \ge 1 \mid data)
+$$
+
+which represents the probability that at least one motor vehicle theft occurs tomorrow in community area $j$. Community areas with the highest values of this probability are identified as the neighborhoods with the highest predicted short-term theft risk.
+
+```{r posterior-predict}
+set.seed(84735)
+
+n_sims <- 10000
+
+predictions <- posterior_summary %>%
+  rowwise() %>%
+  mutate(
+    sim_lambda = list(rgamma(n_sims, shape = post_alpha, rate = post_beta)),
+    sim_tomorrow = list(rpois(n_sims, lambda = sim_lambda)),
+    pred_mean = mean(sim_tomorrow),
+    pred_median = median(sim_tomorrow),
+    prob_at_least_1 = mean(sim_tomorrow >= 1),
+    prob_at_least_2 = mean(sim_tomorrow >= 2),
+    pred_80_lower = quantile(sim_tomorrow, 0.10),
+    pred_80_upper = quantile(sim_tomorrow, 0.90)
+  ) %>%
+  ungroup()
+
+```
+
+```{r ranking}
+# rank area 
+top_risk <- predictions %>%
+  arrange(desc(prob_at_least_1)) %>%
+  select(
+    community_area,
+    posterior_mean,
+    pred_mean,
+    prob_at_least_1,
+    prob_at_least_2,
+    pred_80_lower,
+    pred_80_upper
+  ) %>%
+  slice_head(n = 10)
+
+top_risk
+```
+
+**Columns specification and Area Decode**
+
+-   posterior_mean = estimated average thefts per day in that area
+
+-   pred_mean = predicted number of thefts tomoorrow
+
+-   prob_at least_1 = probability of at least 1 theft tomorrow
+
+-   prob_at least_2 = probability of at least 2 or more theft tomorrow
+
+```{r area-code}
+# join area using code from the data to make further interpretation 
+area_lookup <- tribble(
+  ~community_area, ~neighborhood,
+  8, "Near North Side",
+  23, "Humboldt Park",
+  24, "West Town",
+  25, "Austin",
+  28, "Near West Side",
+  32, "Loop",
+  35, "Douglas",
+  43, "South Shore",
+  44, "Chatham",
+  71, "Auburn Gresham"
+)
+
+results_named <- top_risk %>%
+  left_join(area_lookup, by = "community_area") %>%
+  mutate(
+    area_label = paste0(neighborhood, " (", community_area, ")")
+  )
+```
+
+```{r plot-pred}
+# visualize results
+ggplot(
+  results_named %>% arrange(prob_at_least_1),
+  aes(x = reorder(area_label, prob_at_least_1), y = prob_at_least_1)
+) +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous(labels = percent_format(accuracy = 1), limits = c(0, 1)) +
+  labs(
+    title = "Predicted probability of at least one motor vehicle theft tomorrow",
+    subtitle = "Top 10 Chicago community areas from posterior predictive simulation",
+    x = "Community area",
+    y = "Probability"
+  )
+```
+
+Figure 3. Visualization of posterior predictive probability of at least one motor vehicle theft occurring tomorrow for top 10 high-risk areas in Chicago.
+
+**Results**
+
+Using the Bayesian Gamma–Poisson model, we estimated the daily motor vehicle theft rate for each Chicago community area and generated posterior predictive simulations to estimate the probability of future theft incidents. These predictions allow us to identify neighborhoods with the highest short-term theft risk.
+
+The results indicate that **Near West Side (Community Area 28)** has the highest predicted risk of motor vehicle theft. Over the 53 observed days, this area experienced **131 theft incidents**, producing a posterior mean estimate of **2.37 thefts per day**. Posterior predictive simulations suggest an expected value of approximately **2.38 thefts tomorrow**, with a **90.8% probability of at least one theft occurring tomorrow** and a **68.2% probability of two or more thefts**.
+
+The next highest risk area is **West Town (Community Area 24)**, which recorded **121 theft incidents** during the observation period. The posterior mean daily theft rate is **2.19 thefts per day**, and the predicted probability of at least one theft tomorrow is approximately **88.8%**, with a **64.5% probability of at least two thefts**.
+
+Similarly, **Austin (Community Area 25)** shows elevated theft risk. With **113 observed incidents**, the posterior mean theft rate is estimated at **2.05 thefts per day**, corresponding to an **86.8% probability of at least one theft tomorrow**.
+
+Several other neighborhoods also demonstrate substantial predicted theft risk. For example, **South Shore (Community Area 43)** has a posterior mean rate of **1.43 thefts per day** and a **75.6% probability of at least one theft tomorrow**. **Douglas (Community Area 35)** and **Auburn Gresham (Community Area 71)** have posterior mean daily theft rates of approximately **1.32 and 1.30 thefts per day**, with predicted probabilities of at least one theft tomorrow of **73.9% and 72.6%**, respectively.
+
+Other areas in the top-risk group include **Humboldt Park (Community Area 23)** and **Loop (Community Area 32)**, both of which show posterior mean daily theft rates slightly above **1.24 thefts per day**, corresponding to predicted probabilities of at least one theft tomorrow of approximately **71–72%**.
+
+Even neighborhoods with comparatively lower estimated rates still exhibit notable theft risk. For example, **Chatham (Community Area 44)** and **Near North Side (Community Area 8)** have posterior mean daily theft rates of approximately **1.07 and 1.03 thefts per day**, respectively. These rates correspond to predicted probabilities of at least one theft tomorrow of **65.5% and 63.7%**.
+
+Overall, the posterior predictive results suggest that several Chicago neighborhoods consistently experience higher daily motor vehicle theft rates.
+
+**Model Evaluation**
+
+To assess model performance, we conducted posterior predictive checks by generating replicated datasets from the fitted Gamma–Poisson model. For each community area, we simulated theft counts across the 53-day observation period using posterior draws of the daily theft rate.
+
+```{r eval-1}
+# generate replicated dataset 
+set.seed(84735)
+
+n_rep <- 5000
+
+ppc_data <- posterior_summary %>%
+  rowwise() %>%
+  mutate(
+    lambda_draw = list(rgamma(n_rep, post_alpha, post_beta)),
+    y_rep = list(rpois(n_rep, lambda_draw * days_observed))
+  ) %>%
+  ungroup()
+```
+
+```{r eval-2}
+# compute average simulated count
+ppc_summary <- ppc_data %>%
+  mutate(
+    sim_mean = map_dbl(y_rep, mean),
+    sim_sd = map_dbl(y_rep, sd)
+  )
+
+ppc_summary %>%
+  select(community_area, total_thefts, sim_mean, sim_sd) %>%
+  head(10)
+```
+
+```{r eval-3}
+# visualize ppc
+ggplot(ppc_summary,
+       aes(x = sim_mean, y = total_thefts)) +
+  geom_point(size = 3) +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(
+    title = "Posterior Predictive Check",
+    subtitle = "Observed vs simulated theft counts",
+    x = "Simulated mean theft counts",
+    y = "Observed theft counts"
+  ) +
+  theme_minimal()
+```
+
+Figure 4. Relationship between the simulated mean theft counts and the observed theft counts across community areas.
+
+Most points lie close to this diagonal which indicates that the simulated data generated by the model closely match the observed counts. This suggests that the Gamma–Poisson model captures the overall pattern of motor vehicle theft incidents across Chicago neighborhoods.
+
+Some neighborhoods with very high theft counts show slightly higher observed values than predicted, suggesting that the model may slightly underestimate extreme theft counts. This may reflect mild overdispersion in the data relative to the Poisson assumption. However, the deviations are small, and overall the posterior predictive check indicates that the model provides a reasonable fit to the observed data.
+
+**Discussion and Limitations**
+
+While the Bayesian Gamma–Poisson model provides a useful framework for estimating and predicting motor vehicle theft risk, several limitations should be considered when interpreting the results.
+
+1.  The dataset used in this analysis covers only 53 days of observations (January 1 to February 22, 2026). Because crime patterns may vary seasonally, the observed theft rates during this short time window may not fully represent long-term patterns throughout the year. For example, vehicle theft rates may change during summer months or holiday periods when vehicle usage patterns differ.
+
+2.  The model assumes that theft incidents within each community area follow a Poisson process with a constant daily rate. This assumption implies that events occur independently and that the average theft rate does not change over the observed period. In reality, theft incidents may be influenced by factors such as police activity, local events, economic conditions, or organized crime patterns, which may introduce temporal variation that the model does not explicitly capture.
+
+3.  The analysis relies on reported motor vehicle theft incidents from the Chicago crime dataset. Not all theft incidents may be reported to law enforcement, and reporting rates may vary across neighborhoods. As a result, the observed counts may underestimate the true number of theft incidents.
+
+4.  The prior distribution used in the model is based on historical citywide theft statistics, rather than neighborhood-specific historical data. While this provides a reasonable baseline estimate for the typical daily theft rate, it may not fully reflect local variations between community areas.
+
+Despite these limitations, the framework have several advantages. Combining prior and observed data stabilizes estimates in neighborhoods with limited observations and allows uncertainty in the theft rates to be formally quantified. The posterior predictive simulations also provide interpretable risk measures, such as the probability that at least one theft occurs tomorrow, which can be used to compare short-term theft risk across neighborhoods.
+
+Future work could extend this analysis by incorporating longer time periods, seasonal effects, or additional predictors such as socioeconomic variables, traffic patterns, or law enforcement activity. More advanced hierarchical or spatial Bayesian models could also be used to capture correlations between neighboring areas and improve risk prediction.
 
 ## 4. Does the probability of arrest for motor vehicle theft vary by community area in Chicago in 2026?
 
@@ -519,8 +981,6 @@ $$\pi_j \sim \text{Beta}(\alpha, \beta)$$ Likelihood: $$y_j \mid \pi_j \sim \tex
 Nationally, only about 10% of vehicle thefts result in an arrest. We can start with this assumption and set our prior to about $\pi_j \sim \text{Beta}(2, 18)$, which has a mean of 0.1.
 
 ```{r}
-library(bayesrules)
-
 plot_beta(2,18)
 
 ```
@@ -528,7 +988,6 @@ plot_beta(2,18)
 Now, we load our data.
 
 ```{r}
-library(tidyverse)
 df <- read.csv("../data/chicago_vehicle_theft_crimes_2026.csv", stringsAsFactors = FALSE)
 
 df <- df %>%
@@ -582,8 +1041,6 @@ plot_beta_binomial(2,18,y=10,n=128)
 ```
 
 ```{r}
-library(ggplot2)
-
 district_posteriors %>%
   arrange(posterior_mean) %>%
   mutate(District = factor(District, levels = District)) %>%
@@ -650,9 +1107,6 @@ pairwise_matrix
 We create a heatmap to identify the strongest differences.
 
 ```{r}
-library(reshape2)
-library(ggplot2)
-
 pairwise_df <- melt(pairwise_matrix)
 
 colnames(pairwise_df) <- c("District_i", "District_j", "Probability")
@@ -681,3 +1135,15 @@ ggplot(pairwise_df, aes(x = District_j, y = District_i, fill = Probability)) +
 ```
 
 From this heatmap we can see that there are several districts with pairwise probability of higher arrest rates being above 0.95. It is clear that the posterior distributions of arrest rates for motor vehicle thefts differ by district.
+
+##Sources Cited
+
+Bishop, Lindsay. “Vehicle Theft Statistics by State — and Most Stolen Cars and Motorcycles.” ValuePenguin, 25 Nov. 2025, www.valuepenguin.com/motor-vehicle-theft-statistics.
+
+Federal Bureau of Investigation. “National Incident-Based Reporting System (NIBRS) — Offense Categories and Data Tools.” FBI Crime Data Explorer, 2024, https://nibrs.fbi.gov/
+
+Federal Bureau of Investigation. “FBI Releases Data on Motor Vehicle Theft: 2019–2023.” FBI News & Press Releases, 17 Oct. 2024, https://www.fbi.gov/news/press-releases/fbi-releases-motor-vehicle-theft-2019-2023
+
+“Facts + Statistics: Auto Theft \| III.” Iii.org, Insurance Information Institute, 2017, www.iii.org/fact-statistic/facts-statistics-auto-theft. Dr. Andrew Schiller. “Chicago, IL Crime Rates.” Neighborhoodscout.com, NeighborhoodScout, 24 Sept. 2019, www.neighborhoodscout.com/il/chicago/crime.
+
+“Monthly Auto Thefts, Last 5 Years \| City of Chicago \| Data Portal.” Cityofchicago.org, 2018, data.cityofchicago.org/Public-Safety/Monthly-Auto-Thefts-Last-5-Years/p6d7-vxbu.

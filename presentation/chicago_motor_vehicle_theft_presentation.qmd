@@ -309,8 +309,7 @@ $$
   \lambda_j \sim \text{Gamma}(2, 2/0.64)
   $$
 
-Mean of Prior:
-$$
+Mean of Prior: $$
   \frac{2}{2/0.64} = 0.64
   $$
 

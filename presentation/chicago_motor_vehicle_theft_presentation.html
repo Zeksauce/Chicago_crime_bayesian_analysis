@@ -328,7 +328,7 @@ Gamma(6.2116,0.1011)
 <h2>Likelihood and Posterior</h2>
 <p>Using the gamma-poisson model makes use of the gamma conjugate prior resulting in the following posterior:</p>
 <p><span class="math display">\[
-Gamma(6.2116 + \Sigma y_i,0.1011+n) = Gamma(2373.2116, 52.1011)
+Gamma(6.2 + \Sigma y_i,0.1+n) = Gamma(2373.2, 52.1)
 \]</span></p>
 
 <img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-8-1.png" width="960" class="r-stretch"></section>
@@ -373,10 +373,8 @@ Y_{jt} \sim \text{Poisson}(\lambda_j)
 <p>We use this baseline to define a prior for the daily theft rate</p>
 <p><span class="math display">\[
   \lambda_j \sim \text{Gamma}(2, 2/0.64)
-  \]</span> <large></large></p>
-
-<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-12-1.png" width="960" class="r-stretch"><p> Mean of prior:</p>
-<p><span class="math display">\[
+  \]</span></p>
+<p>Mean of Prior: <span class="math display">\[
   \frac{2}{2/0.64} = 0.64
   \]</span></p>
 </section>
@@ -421,7 +419,7 @@ L(\lambda_j \mid y_j) \propto \lambda_j^{y_j} e^{-T\lambda_j}
 </div>
 </div>
 
-<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-14-1.png" width="960" class="r-stretch"><p>For Area 28, the posterior mean is about 2.37 thefts per day, and the 80% credible interval is approximately 2.11 to 2.64.</p>
+<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-13-1.png" width="960" class="r-stretch"><p>For Area 28, the posterior mean is about 2.37 thefts per day, and the 80% credible interval is approximately 2.11 to 2.64.</p>
 </section>
 <section id="posterior-predictive-simulation" class="slide level2">
 <h2>Posterior Predictive Simulation</h2>
@@ -449,7 +447,7 @@ L(\lambda_j \mid y_j) \propto \lambda_j^{y_j} e^{-T\lambda_j}
 <section id="insights-conclusion" class="slide level2">
 <h2>Insights &amp; Conclusion</h2>
 
-<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-17-1.png" width="960" class="r-stretch"><p>Near West Side (28) has the highest predicted risk: 90.8%</p>
+<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-16-1.png" width="960" class="r-stretch"><p>Near West Side (28) has the highest predicted risk: 90.8%</p>
 <p>West Town (24) and Austin (25) follow at 88.8% and 86.8%</p>
 <p>Theft risk varies substantially across Chicago neighborhoods.</p>
 </section>
@@ -466,13 +464,7 @@ L(\lambda_j \mid y_j) \propto \lambda_j^{y_j} e^{-T\lambda_j}
 <li>We use a Beta(2, 18) with a mean of 0.10 to model this</li>
 </ul>
 
-<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-18-1.png" width="960" class="r-stretch"></section>
-<section id="model" class="slide level2">
-<h2>Model</h2>
-<p><span class="math inline">\(y_j\)</span> = number of motor-vehicle-theft incidents that resulted in an arrest in area <span class="math inline">\(j\)</span>.</p>
-<p><span class="math inline">\(\pi_j = P(\text{arrest} \mid \text{MVT in area } j)\)</span>.</p>
-<p><span class="math display">\[\pi_j \sim \text{Beta}(\alpha, \beta)\]</span> Likelihood: <span class="math display">\[y_j \mid \pi_j \sim \text{Binomial}(n_j, \pi_j)\]</span> Posterior: <span class="math display">\[\pi_j \mid \text{data} \sim \text{Beta}(\alpha + y_j, \ \beta + n_j - y_j)\]</span></p>
-</section>
+<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-17-1.png" width="960" class="r-stretch"></section>
 <section id="likelihood-2" class="slide level2">
 <h2>Likelihood</h2>
 <p>Now we calculate <span class="math inline">\(pi_j\)</span> for each District of Chicago, and update the posterior for each city using the Beta-Binomial closed form.</p>
@@ -498,9 +490,9 @@ L(\lambda_j \mid y_j) \propto \lambda_j^{y_j} e^{-T\lambda_j}
 </section>
 <section id="comparing-cities" class="slide level2">
 <h2>Comparing Cities</h2>
-<p>By creating a confidence interval for posterior arrest probability, we can see there is quite a difference between different cities.</p>
+<p>By creating a credible interval for posterior arrest probability, we can see there is quite a difference between different cities.</p>
 
-<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-20-1.png" width="960" class="r-stretch"></section>
+<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-19-1.png" width="960" class="r-stretch"></section>
 <section id="sampling" class="slide level2">
 <h2>Sampling</h2>
 <p>Now we’d like to statistically compute whether arrest proportions differ by district in Chicago. Formally, we compute <span class="math inline">\(P(\pi_i &gt; \pi_j)\)</span> for all pairs of district i and district j. In order to do this, we sample from the posterior distribution of each district and compare the samples.</p>
@@ -509,7 +501,7 @@ L(\lambda_j \mid y_j) \propto \lambda_j^{y_j} e^{-T\lambda_j}
 <h2>Statistical difference</h2>
 <p>Now to actually compare the differences in a readable way, we display a heatmap.</p>
 
-<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-21-1.png" width="960" class="r-stretch"></section>
+<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-20-1.png" width="960" class="r-stretch"></section>
 <section id="analysis" class="slide level2">
 <h2>Analysis</h2>
 <ul>
@@ -530,6 +522,7 @@ L(\lambda_j \mid y_j) \propto \lambda_j^{y_j} e^{-T\lambda_j}
 <ol type="1">
 <li><p>No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis</p></li>
 <li><p>Investigate the number of stolen vehicles within each sector of the city for a given day with a hierarchical model</p></li>
+<li><p>We have limited data which only covers a portion (53 days of observation)</p></li>
 </ol>
 </section>
 <section id="sources-cited" class="slide level2">
