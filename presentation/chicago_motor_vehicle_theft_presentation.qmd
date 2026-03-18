@@ -224,6 +224,246 @@ ggplot(predictive_df, aes(x = thefts)) +
 
 The most likely value is 45 with a probability of 0.059. On average we should see the rate of 45.57 cars stolen per night and a 50% chance of having less than or equal to 45 cars stolen.
 
+## 3. Exploring theft risk by community area
+
+Which Chicago community areas have the highest probability of at least one motor vehicle theft tomorrow?
+
+```{r}
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(scales)
+
+crime <- read_csv("../data/chicago_vehicle_theft_crimes_2026.csv")
+
+crime <- crime %>%
+  mutate(
+    date_time = mdy_hms(Date),
+    day = as_date(date_time),
+    community_area = `Community Area`
+  )
+
+daily_counts <- crime %>%
+  filter(!is.na(community_area)) %>%
+  group_by(community_area, day) %>%
+  summarise(thefts = n(), .groups = "drop")
+
+all_days <- seq(min(crime$day, na.rm = TRUE), max(crime$day, na.rm = TRUE), by = "day")
+all_areas <- crime %>%
+  filter(!is.na(community_area)) %>%
+  distinct(community_area)
+
+daily_complete <- expand_grid(
+  community_area = all_areas$community_area,
+  day = all_days
+) %>%
+  left_join(daily_counts, by = c("community_area", "day")) %>%
+  mutate(thefts = replace_na(thefts, 0))
+
+area_summary <- daily_complete %>%
+  group_by(community_area) %>%
+  summarise(
+    total_thefts = sum(thefts),
+    days_observed = n(),
+    sample_daily_mean = mean(thefts),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(total_thefts))
+
+area_summary %>%
+  slice_head(n = 10) %>%
+  ggplot(aes(x = reorder(factor(community_area), total_thefts), y = total_thefts)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top 10 Community Areas by Total Vehicle Thefts",
+    x = "Community Area",
+    y = "Total Thefts"
+  )
+```
+
+## Prior: Model & Data
+
+- Daily thefts in community area $j$ are modeled as
+
+  $$
+  Y_{jt} \sim \text{Poisson}(\lambda_j)
+  $$
+
+- June 2025: about **1,473 vehicle thefts** in Chicago $\Rightarrow$ about **49 thefts per day** citywide
+
+- With **77 community areas**, the baseline rate is
+
+  $$
+  \frac{49}{77} \approx 0.64
+  $$
+- We use this baseline to construct a Gamma prior for the daily theft rate in each area.
+
+## Prior: Distribution
+
+We use this baseline to define a prior for the daily theft rate
+
+  $$
+  \lambda_j \sim \text{Gamma}(2, 2/0.64)
+  $$
+<large>
+```{r}
+library(bayesrules)
+# Plot the prior distribution
+plot_gamma(2, 2/0.64)
+```
+
+</large>
+Mean of prior:
+
+  $$
+  \frac{2}{2/0.64} = 0.64
+  $$
+
+## Likelihood
+
+- For each community area $j$, we observe daily theft counts over $T$ days
+
+- Let $y_j$ be the total number of thefts in that area
+
+- We model the data as
+
+  $$
+  Y_{jt} \mid \lambda_j \sim \text{Poisson}(\lambda_j)
+  $$
+
+- Aggregating over time, the likelihood becomes
+
+  $$
+  L(\lambda_j \mid y_j) \propto \lambda_j^{y_j} e^{-T\lambda_j}
+  $$
+
+## Posterior
+
+- With a Poisson likelihood and Gamma prior, the posterior is also Gamma:
+
+  $$
+  \lambda_j \mid \text{data} \sim \text{Gamma}(\alpha + y_j,\ \beta + T)
+  $$
+
+- Here:
+  - $y_j$ = total thefts observed in community area $j$
+  - $T$ = number of observed days
+
+## Posterior
+
+```{r}
+# posterior parameters for each community area
+alpha <- 2
+beta <- 2 / 0.64
+
+posterior_summary <- area_summary %>%
+  mutate(
+    post_alpha = alpha + total_thefts,
+    post_beta = beta + days_observed,
+    posterior_mean = post_alpha / post_beta,
+    ci_80_lower = qgamma(0.10, shape = post_alpha, rate = post_beta),
+    ci_80_upper = qgamma(0.90, shape = post_alpha, rate = post_beta)
+  ) %>%
+  arrange(desc(posterior_mean))
+
+posterior_summary %>%
+  select(community_area, total_thefts, days_observed, posterior_mean,
+         ci_80_lower, ci_80_upper) %>%
+  head(1)
+```
+
+
+```{r}
+alpha <- 2
+beta <- 2 / 0.64
+
+T_days <- 53
+y_28 <- 131
+
+plot_gamma_poisson(
+  shape = alpha,
+  rate = beta,
+  n = T_days,
+  sum_y = y_28
+)
+```
+
+For Area 28, the posterior mean is about 2.37 thefts per day, and the 80% credible interval is approximately 2.11 to 2.64.
+
+## Posterior Predictive Simulation
+
+- To predict theft risk, we simulate tomorrow’s theft count for each community area
+
+```{r}
+set.seed(84735)
+n_sims <- 10000
+
+predictions <- posterior_summary %>%
+  rowwise() %>%
+  mutate(
+    sim_lambda = list(rgamma(n_sims, shape = post_alpha, rate = post_beta)),
+    sim_tomorrow = list(rpois(n_sims, lambda = sim_lambda)),
+    pred_mean = mean(sim_tomorrow),
+    prob_at_least_1 = mean(sim_tomorrow >= 1)
+  ) %>%
+  ungroup()
+
+top_risk <- predictions %>%
+  arrange(desc(prob_at_least_1)) %>%
+  slice_head(n = 10)
+
+top_risk %>%
+  select(community_area, pred_mean, prob_at_least_1)
+```
+
+## Insights & Conclusion
+
+```{r}
+area_lookup <- tribble(
+  ~community_area, ~neighborhood,
+  8, "Near North Side",
+  23, "Humboldt Park",
+  24, "West Town",
+  25, "Austin",
+  28, "Near West Side",
+  32, "Loop",
+  35, "Douglas",
+  43, "South Shore",
+  44, "Chatham",
+  71, "Auburn Gresham"
+)
+
+results_named <- top_risk %>%
+  left_join(area_lookup, by = "community_area") %>%
+  mutate(area_label = paste0(neighborhood, " (", community_area, ")"))
+```
+
+```{r}
+ggplot(
+  results_named %>% arrange(prob_at_least_1),
+  aes(x = reorder(area_label, prob_at_least_1), y = prob_at_least_1)
+) +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous(labels = percent_format(accuracy = 1), limits = c(0, 1)) +
+  labs(
+    title = "Probability of at least one vehicle theft tomorrow",
+    subtitle = "Top 10 Chicago community areas",
+    x = "Community area",
+    y = "Probability"
+  ) +
+  theme_minimal()
+```
+
+Near West Side (28) has the highest predicted risk: 90.8%
+
+West Town (24) and Austin (25) follow at 88.8% and 86.8%
+
+Theft risk varies substantially across Chicago neighborhoods.
+
 ## Fighting Crime with Bayesian Analysis
 
 (delete this later) Who will these results help in the future and how?
