@@ -480,3 +480,169 @@ Theft risk varies substantially across Chicago neighborhoods.
 1.  No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis
 
 2.  Investigate the number of stolen vehicles within each sector of the city for a given day with a hierarchical model
+
+
+## 4. Exploring probability of arrest by community area
+
+Does the probability of arrest for motor vehicle theft vary by community area in Chicago in 2026?
+
+We will use a Beta-Binomial model for various communities and then compare them. 
+
+## Prior
+
+- Source: Illinois Policy 
+- ~10% of vehicle thefts result in arrest nationally.
+- We use a Beta(2, 18) with a mean of 0.10 to model this
+
+```{r}
+library(bayesrules)
+plot_beta(2,18)
+```
+
+## Model
+
+$y_j$ = number of motor-vehicle-theft incidents that resulted in an arrest in area $j$.
+
+$\pi_j = P(\text{arrest} \mid \text{MVT in area } j)$.
+
+$$\pi_j \sim \text{Beta}(\alpha, \beta)$$
+Likelihood:
+$$y_j \mid \pi_j \sim \text{Binomial}(n_j, \pi_j)$$
+Posterior:
+$$\pi_j \mid \text{data} \sim \text{Beta}(\alpha + y_j, \ \beta + n_j - y_j)$$
+
+## Likelihood
+
+Now we calculate $pi_j$ for each District of Chicago, and update the posterior for each city using the Beta-Binomial closed form. 
+
+```{r}
+library(tidyverse)
+df <- read.csv("../data/chicago_vehicle_theft_crimes_2026.csv", stringsAsFactors = FALSE)
+df <- df %>%
+  mutate(arrest_numeric = ifelse(Arrest == "true", 1, 0))
+
+district_counts <- df %>%
+  group_by(District) %>%
+  summarize(
+    n = n(),                    # total incidents
+    y = sum(arrest_numeric),    # arrests
+    observed_rate = y/n
+  ) %>%
+  arrange(desc(n))
+
+alpha_prior <- 2
+beta_prior <- 18
+
+district_posteriors <- district_counts %>%
+  mutate(
+    alpha_post = alpha_prior + y,
+    beta_post = beta_prior + n - y,
+    
+    posterior_mean = alpha_post / (alpha_post + beta_post),
+    
+    ci_lower = qbeta(0.025, alpha_post, beta_post),
+    ci_upper = qbeta(0.975, alpha_post, beta_post)
+  )
+
+district_posteriors
+```
+
+## Comparing Cities
+
+By creating a confidence interval for posterior arrest probability, we can see there is quite a difference between different cities. 
+```{r}
+library(ggplot2)
+
+district_posteriors %>%
+  arrange(posterior_mean) %>%
+  mutate(District = factor(District, levels = District)) %>%
+  ggplot(aes(x = posterior_mean, y = District)) +
+  geom_point() +
+  geom_errorbarh(aes(xmin = ci_lower, xmax = ci_upper), height = 0.2) +
+  labs(
+    title = "Posterior Arrest Probability by District",
+    x = "Posterior Mean Arrest Probability",
+    y = "District"
+  ) +
+  theme_minimal()
+```
+
+## Sampling
+
+Now we'd like to statistically compute whether arrest proportions differ by district in Chicago. Formally, we compute $P(\pi_i > \pi_j)$ for all pairs of district i and district j. In order to do this, we sample from the posterior distribution of each district and compare the samples. 
+
+
+## Statistical difference 
+
+Now to actually compare the differences in a readable way, we display a heatmap.
+
+```{r}
+library(reshape2)
+
+
+set.seed(123)
+num_samples <- 5000
+
+district_names <- district_posteriors$District
+num_districts <- length(district_names)
+
+# Generate samples for each district
+posterior_samples <- lapply(
+  1:num_districts,
+  function(i){
+    rbeta(
+      num_samples,
+      district_posteriors$alpha_post[i],
+      district_posteriors$beta_post[i]
+    )
+  }
+)
+
+pairwise_matrix <- matrix(
+  NA,
+  nrow = num_districts,
+  ncol = num_districts,
+  dimnames = list(district_names, district_names)
+)
+
+for(i in 1:num_districts){
+  for(j in 1:num_districts){
+    
+    samples_i <- posterior_samples[[i]]
+    samples_j <- posterior_samples[[j]]
+    
+    pairwise_matrix[i, j] <- mean(samples_i > samples_j)
+    
+  }
+}
+
+pairwise_df <- melt(pairwise_matrix)
+
+colnames(pairwise_df) <- c("District_i", "District_j", "Probability")
+
+ggplot(pairwise_df, aes(x = District_j, y = District_i, fill = Probability)) +
+  geom_tile() +
+  scale_fill_gradient2(
+    low = "blue",
+    mid = "white",
+    high = "red",
+    midpoint = 0.5,
+    limits = c(0,1)
+  ) +
+  labs(
+    title = "Pairwise Posterior Probabilities of Higher Arrest Rates",
+    subtitle = "Cell (i,j) shows P(pi_i > pi_j)",
+    x = "District j",
+    y = "District i",
+    fill = "Probability"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+## Analysis
+
+- As we can see from the heatmap, we have several districts with pairwise probability of higher arrest rates being above 0.95.
+- It is clear that the posterior distributions of arres rates for motor vehicle thefts differ significantly by district. 
