@@ -469,6 +469,70 @@ L(\lambda_j \mid y_j) \propto \lambda_j^{y_j} e^{-T\lambda_j}
 <li><p>No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis</p></li>
 <li><p>Investigate the number of stolen vehicles within each sector of the city for a given day with a hierarchical model</p></li>
 </ol>
+</section>
+<section id="exploring-probability-of-arrest-by-community-area" class="slide level2">
+<h2>4. Exploring probability of arrest by community area</h2>
+<p>Does the probability of arrest for motor vehicle theft vary by community area in Chicago in 2026?</p>
+<p>We will use a Beta-Binomial model for various communities and then compare them.</p>
+</section>
+<section id="prior-1" class="slide level2">
+<h2>Prior</h2>
+<ul>
+<li>Source: Illinois Policy</li>
+<li>~10% of vehicle thefts result in arrest nationally.</li>
+<li>We use a Beta(2, 18) with a mean of 0.10 to model this</li>
+</ul>
+
+<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-18-1.png" width="960" class="r-stretch"></section>
+<section id="model" class="slide level2">
+<h2>Model</h2>
+<p><span class="math inline">\(y_j\)</span> = number of motor-vehicle-theft incidents that resulted in an arrest in area <span class="math inline">\(j\)</span>.</p>
+<p><span class="math inline">\(\pi_j = P(\text{arrest} \mid \text{MVT in area } j)\)</span>.</p>
+<p><span class="math display">\[\pi_j \sim \text{Beta}(\alpha, \beta)\]</span> Likelihood: <span class="math display">\[y_j \mid \pi_j \sim \text{Binomial}(n_j, \pi_j)\]</span> Posterior: <span class="math display">\[\pi_j \mid \text{data} \sim \text{Beta}(\alpha + y_j, \ \beta + n_j - y_j)\]</span></p>
+</section>
+<section id="likelihood-2" class="slide level2">
+<h2>Likelihood</h2>
+<p>Now we calculate <span class="math inline">\(pi_j\)</span> for each District of Chicago, and update the posterior for each city using the Beta-Binomial closed form.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 22 × 9
+   District     n     y observed_rate alpha_post beta_post posterior_mean
+      &lt;int&gt; &lt;int&gt; &lt;dbl&gt;         &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;          &lt;dbl&gt;
+ 1       12   213     0        0               2       231        0.00858
+ 2        2   212     6        0.0283          8       224        0.0345 
+ 3        4   176     3        0.0170          5       191        0.0255 
+ 4        8   163     4        0.0245          6       177        0.0328 
+ 5        6   153     5        0.0327          7       166        0.0405 
+ 6       11   128    10        0.0781         12       136        0.0811 
+ 7        1   126     3        0.0238          5       141        0.0342 
+ 8       25   124     4        0.0323          6       138        0.0417 
+ 9        3   122     4        0.0328          6       136        0.0423 
+10        9   103     3        0.0291          5       118        0.0407 
+# ℹ 12 more rows
+# ℹ 2 more variables: ci_lower &lt;dbl&gt;, ci_upper &lt;dbl&gt;</code></pre>
+</div>
+</div>
+</section>
+<section id="comparing-cities" class="slide level2">
+<h2>Comparing Cities</h2>
+<p>By creating a confidence interval for posterior arrest probability, we can see there is quite a difference between different cities.</p>
+
+<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-20-1.png" width="960" class="r-stretch"></section>
+<section id="sampling" class="slide level2">
+<h2>Sampling</h2>
+<p>Now we’d like to statistically compute whether arrest proportions differ by district in Chicago. Formally, we compute <span class="math inline">\(P(\pi_i &gt; \pi_j)\)</span> for all pairs of district i and district j. In order to do this, we sample from the posterior distribution of each district and compare the samples.</p>
+</section>
+<section id="statistical-difference" class="slide level2">
+<h2>Statistical difference</h2>
+<p>Now to actually compare the differences in a readable way, we display a heatmap.</p>
+
+<img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-21-1.png" width="960" class="r-stretch"></section>
+<section id="analysis" class="slide level2">
+<h2>Analysis</h2>
+<ul>
+<li>As we can see from the heatmap, we have several districts with pairwise probability of higher arrest rates being above 0.95.</li>
+<li>It is clear that the posterior distributions of arres rates for motor vehicle thefts differ significantly by district.</li>
+</ul>
 
 </section>
     </div>
