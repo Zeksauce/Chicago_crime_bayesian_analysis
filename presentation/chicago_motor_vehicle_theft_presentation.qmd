@@ -273,15 +273,14 @@ area_summary <- daily_complete %>%
   arrange(desc(total_thefts))
 
 area_summary %>%
-  slice_head(n = 10) %>%
-  ggplot(aes(x = reorder(factor(community_area), total_thefts), y = total_thefts)) +
-  geom_col() +
-  coord_flip() +
+  ggplot(aes(x = sample_daily_mean)) +
+  geom_histogram(bins = 30) +
   labs(
-    title = "Top 10 Community Areas by Total Vehicle Thefts",
-    x = "Community Area",
-    y = "Total Thefts"
-  )
+    title = "Distribution of Average Daily Theft Rates Across Community Areas",
+    x = "Average thefts per day",
+    y = "Number of community areas"
+  ) +
+  theme_minimal()
 ```
 
 ## Prior: Model & Data
