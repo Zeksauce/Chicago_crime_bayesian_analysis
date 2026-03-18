@@ -285,71 +285,72 @@ area_summary %>%
 
 ## Prior: Model & Data
 
-- Daily thefts in community area $j$ are modeled as
+-   Daily thefts in community area $j$ are modeled as
 
-  $$
-  Y_{jt} \sim \text{Poisson}(\lambda_j)
-  $$
+    $$
+    Y_{jt} \sim \text{Poisson}(\lambda_j)
+    $$
 
-- June 2025: about **1,473 vehicle thefts** in Chicago $\Rightarrow$ about **49 thefts per day** citywide
+-   June 2025: about **1,473 vehicle thefts** in Chicago $\Rightarrow$ about **49 thefts per day** citywide
 
-- With **77 community areas**, the baseline rate is
+-   With **77 community areas**, the baseline rate is
 
-  $$
-  \frac{49}{77} \approx 0.64
-  $$
-- We use this baseline to construct a Gamma prior for the daily theft rate in each area.
+    $$
+    \frac{49}{77} \approx 0.64
+    $$
+
+-   We use this baseline to construct a Gamma prior for the daily theft rate in each area.
 
 ## Prior: Distribution
 
 We use this baseline to define a prior for the daily theft rate
 
-  $$
+$$
   \lambda_j \sim \text{Gamma}(2, 2/0.64)
-  $$
-<large>
+  $$ <large>
+
 ```{r}
 library(bayesrules)
 # Plot the prior distribution
 plot_gamma(2, 2/0.64)
 ```
 
-</large>
-Mean of prior:
+</large> Mean of prior:
 
-  $$
+$$
   \frac{2}{2/0.64} = 0.64
   $$
 
 ## Likelihood
 
-- For each community area $j$, we observe daily theft counts over $T$ days
+-   For each community area $j$, we observe daily theft counts over $T$ days
 
-- Let $y_j$ be the total number of thefts in that area
+-   Let $y_j$ be the total number of thefts in that area
 
-- We model the data as
+-   We model the data as
 
-  $$
-  Y_{jt} \mid \lambda_j \sim \text{Poisson}(\lambda_j)
-  $$
+    $$
+    Y_{jt} \mid \lambda_j \sim \text{Poisson}(\lambda_j)
+    $$
 
-- Aggregating over time, the likelihood becomes
+-   Aggregating over time, the likelihood becomes
 
-  $$
-  L(\lambda_j \mid y_j) \propto \lambda_j^{y_j} e^{-T\lambda_j}
-  $$
+    $$
+    L(\lambda_j \mid y_j) \propto \lambda_j^{y_j} e^{-T\lambda_j}
+    $$
 
 ## Posterior
 
-- With a Poisson likelihood and Gamma prior, the posterior is also Gamma:
+-   With a Poisson likelihood and Gamma prior, the posterior is also Gamma:
 
-  $$
-  \lambda_j \mid \text{data} \sim \text{Gamma}(\alpha + y_j,\ \beta + T)
-  $$
+    $$
+    \lambda_j \mid \text{data} \sim \text{Gamma}(\alpha + y_j,\ \beta + T)
+    $$
 
-- Here:
-  - $y_j$ = total thefts observed in community area $j$
-  - $T$ = number of observed days
+-   Here:
+
+    -   $y_j$ = total thefts observed in community area $j$
+    -   $T$ = number of observed days
 
 ## Posterior
 
@@ -374,7 +375,6 @@ posterior_summary %>%
   head(1)
 ```
 
-
 ```{r}
 alpha <- 2
 beta <- 2 / 0.64
@@ -394,7 +394,7 @@ For Area 28, the posterior mean is about 2.37 thefts per day, and the 80% credib
 
 ## Posterior Predictive Simulation
 
-- To predict theft risk, we simulate tomorrow’s theft count for each community area
+-   To predict theft risk, we simulate tomorrow’s theft count for each community area
 
 ```{r}
 set.seed(84735)
@@ -463,36 +463,17 @@ West Town (24) and Austin (25) follow at 88.8% and 86.8%
 
 Theft risk varies substantially across Chicago neighborhoods.
 
-## Fighting Crime with Bayesian Analysis
-
-(delete this later) Who will these results help in the future and how?
-
-1.  Help people protect their personal vehicles by being aware of dangerous times to leave vehicles unlocked or out
-
-2.  Help law enforcement enforce regulations to limit vehicle theft, such as increasing street lighting
-
-3.  Inform car insurance companies about risk especially in Chicago
-
-## Limitations + Next Steps
-
-(delete this later) If you had all the resources in the world and unlimited time what would you do on this topic? What are the limitations of the analysis you have done that you could correct in the future with unlimited resources?
-
-1.  No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis
-
-2.  Investigate the number of stolen vehicles within each sector of the city for a given day with a hierarchical model
-
-
 ## 4. Exploring probability of arrest by community area
 
 Does the probability of arrest for motor vehicle theft vary by community area in Chicago in 2026?
 
-We will use a Beta-Binomial model for various communities and then compare them. 
+We will use a Beta-Binomial model for various communities and then compare them.
 
 ## Prior
 
-- Source: Illinois Policy 
-- ~10% of vehicle thefts result in arrest nationally.
-- We use a Beta(2, 18) with a mean of 0.10 to model this
+-   Source: Illinois Policy
+-   \~10% of vehicle thefts result in arrest nationally.
+-   We use a Beta(2, 18) with a mean of 0.10 to model this
 
 ```{r}
 library(bayesrules)
@@ -505,15 +486,11 @@ $y_j$ = number of motor-vehicle-theft incidents that resulted in an arrest in ar
 
 $\pi_j = P(\text{arrest} \mid \text{MVT in area } j)$.
 
-$$\pi_j \sim \text{Beta}(\alpha, \beta)$$
-Likelihood:
-$$y_j \mid \pi_j \sim \text{Binomial}(n_j, \pi_j)$$
-Posterior:
-$$\pi_j \mid \text{data} \sim \text{Beta}(\alpha + y_j, \ \beta + n_j - y_j)$$
+$$\pi_j \sim \text{Beta}(\alpha, \beta)$$ Likelihood: $$y_j \mid \pi_j \sim \text{Binomial}(n_j, \pi_j)$$ Posterior: $$\pi_j \mid \text{data} \sim \text{Beta}(\alpha + y_j, \ \beta + n_j - y_j)$$
 
 ## Likelihood
 
-Now we calculate $pi_j$ for each District of Chicago, and update the posterior for each city using the Beta-Binomial closed form. 
+Now we calculate $pi_j$ for each District of Chicago, and update the posterior for each city using the Beta-Binomial closed form.
 
 ```{r}
 library(tidyverse)
@@ -549,7 +526,8 @@ district_posteriors
 
 ## Comparing Cities
 
-By creating a confidence interval for posterior arrest probability, we can see there is quite a difference between different cities. 
+By creating a confidence interval for posterior arrest probability, we can see there is quite a difference between different cities.
+
 ```{r}
 library(ggplot2)
 
@@ -569,10 +547,9 @@ district_posteriors %>%
 
 ## Sampling
 
-Now we'd like to statistically compute whether arrest proportions differ by district in Chicago. Formally, we compute $P(\pi_i > \pi_j)$ for all pairs of district i and district j. In order to do this, we sample from the posterior distribution of each district and compare the samples. 
+Now we'd like to statistically compute whether arrest proportions differ by district in Chicago. Formally, we compute $P(\pi_i > \pi_j)$ for all pairs of district i and district j. In order to do this, we sample from the posterior distribution of each district and compare the samples.
 
-
-## Statistical difference 
+## Statistical difference
 
 Now to actually compare the differences in a readable way, we display a heatmap.
 
@@ -644,5 +621,19 @@ ggplot(pairwise_df, aes(x = District_j, y = District_i, fill = Probability)) +
 
 ## Analysis
 
-- As we can see from the heatmap, we have several districts with pairwise probability of higher arrest rates being above 0.95.
-- It is clear that the posterior distributions of arres rates for motor vehicle thefts differ significantly by district. 
+-   As we can see from the heatmap, we have several districts with pairwise probability of higher arrest rates being above 0.95.
+-   It is clear that the posterior distributions of arres rates for motor vehicle thefts differ significantly by district.
+
+## Fighting Crime with Bayesian Analysis
+
+1.  Help people protect their personal vehicles by being aware of dangerous times to leave vehicles unlocked or out
+
+2.  Help law enforcement enforce regulations to limit vehicle theft, such as increasing street lighting
+
+3.  Inform car insurance companies about risk especially in Chicago
+
+## Limitations + Next Steps
+
+1.  No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis
+
+2.  Investigate the number of stolen vehicles within each sector of the city for a given day with a hierarchical model
