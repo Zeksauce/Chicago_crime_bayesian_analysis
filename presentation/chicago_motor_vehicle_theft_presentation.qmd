@@ -473,14 +473,6 @@ library(bayesrules)
 plot_beta(2,18)
 ```
 
-## Model
-
-$y_j$ = number of motor-vehicle-theft incidents that resulted in an arrest in area $j$.
-
-$\pi_j = P(\text{arrest} \mid \text{MVT in area } j)$.
-
-$$\pi_j \sim \text{Beta}(\alpha, \beta)$$ Likelihood: $$y_j \mid \pi_j \sim \text{Binomial}(n_j, \pi_j)$$ Posterior: $$\pi_j \mid \text{data} \sim \text{Beta}(\alpha + y_j, \ \beta + n_j - y_j)$$
-
 ## Likelihood
 
 Now we calculate $pi_j$ for each District of Chicago, and update the posterior for each city using the Beta-Binomial closed form.
