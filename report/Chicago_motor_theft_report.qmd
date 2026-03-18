@@ -162,7 +162,7 @@ ggplot(grid_data, aes(x = pi_grid, y = posterior)) +
   geom_segment(aes(x = pi_grid, xend = pi_grid, y = 0, yend = posterior))
 ```
 
-The resulting discretized posterior is a lot smoother compared with the one with only 6 grid values. Now, let's sample from the discretized posterior.
+Now, let's sample from the discretized posterior.
 
 ```{r}
 set.seed(84735)
