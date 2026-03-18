@@ -179,7 +179,7 @@ From the plot the counts don't seem to follow a trend, so we assume that:
 Using the gamma-poisson model makes use of the gamma conjugate prior resulting in the following posterior:
 
 $$
-Gamma(6.2116 + \Sigma y_i,0.1011+n) = Gamma(2373.2116, 52.1011)
+Gamma(6.2 + \Sigma y_i,0.1+n) = Gamma(2373.2, 52.1)
 $$
 
 ```{r}
@@ -307,16 +307,9 @@ We use this baseline to define a prior for the daily theft rate
 
 $$
   \lambda_j \sim \text{Gamma}(2, 2/0.64)
-  $$ <large>
+  $$
 
-```{r}
-library(bayesrules)
-# Plot the prior distribution
-plot_gamma(2, 2/0.64)
-```
-
-</large> Mean of prior:
-
+Mean of Prior:
 $$
   \frac{2}{2/0.64} = 0.64
   $$
@@ -526,7 +519,7 @@ district_posteriors
 
 ## Comparing Cities
 
-By creating a confidence interval for posterior arrest probability, we can see there is quite a difference between different cities.
+By creating a credible interval for posterior arrest probability, we can see there is quite a difference between different cities.
 
 ```{r}
 library(ggplot2)
@@ -637,6 +630,8 @@ ggplot(pairwise_df, aes(x = District_j, y = District_i, fill = Probability)) +
 1.  No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis
 
 2.  Investigate the number of stolen vehicles within each sector of the city for a given day with a hierarchical model
+
+3.  We have limited data which only covers a portion (53 days of observation)
 
 ## Sources Cited
 
