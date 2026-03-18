@@ -3,7 +3,9 @@ The analysis utilizes data pulled from the Chicago Data portal (https://data.cit
 
 
 A few important rows are:  
-"ID", "Case Number", "Date", "Block", "Arrest", "District", "Ward", "Community Area", "X Coordinate", "Y Coordinate", "Year", "Updated On", "Latitude", "Longitude", "Location"
+"ID", "Case Number", "Date", "Block", "Arrest", "District", "Ward", "Community Area", "X Coordinate", "Y Coordinate", "Year", "Updated On", "Latitude", "Longitude", "Location"  
+
+
 The specific time period chosen for the analysis was January 1st 2026 until Februrary 22nd and was filtered to only include arrest flags for motor vehicle thefts in Chicago.
 
 
