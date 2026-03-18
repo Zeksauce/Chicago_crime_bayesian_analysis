@@ -132,11 +132,10 @@ We confirm that our posterior has a higher mean and mode than our prior. So base
 
 **Grid Approximation**
 
-Let's approximate the posterior using grid approximation. First split the continuum of possible $\pi$ values onto a finite grid.
+Let's approximate the posterior using grid approximation. First split the continuum of possible $\pi$ values onto a finite grid of 101 values.
 
 ```{r}
-grid_data <- data.frame(pi_grid = seq(from = 0.50, to = 0.60, length = 5))
-grid_data
+grid_data <- data.frame(pi_grid = seq(from = 0.50, to = 0.61, length = 101))
 ```
 
 Encode the Beta(104, 96) prior and Binomial(2369, $\pi$) likelihood with Y=1371 at each $\pi$ in pi_grid.
@@ -155,37 +154,7 @@ grid_data <- grid_data %>%
          posterior = unnormalized / sum(unnormalized))
 ```
 
-The resulting discretized posterior pdf gives us a sense of what the posterior pdf is. It places a roughly 93% chance on $\pi$ being 0.58, and a roughly 100% chance of $\pi$ being 0.55, 0.58, or 0.6.
-
-```{r}
-round(grid_data, 2)
-```
-
 Plot the discretized posterior pdf.
-
-```{r}
-ggplot(grid_data, aes(x = pi_grid, y = posterior)) + 
-  geom_point() + 
-  geom_segment(aes(x = pi_grid, xend = pi_grid, y = 0, yend = posterior))
-```
-
-However, this is an extreme oversimplification of the true Beta posterior. If we were to sample from this posterior, the result would not mimic the shape, location and spread of a smooth pdf. Let's try again with 101 $\pi$ values.
-
-```{r}
-grid_data <- data.frame(pi_grid = seq(from = 0.50, to = 0.60, length = 101))
-```
-
-```{r}
-grid_data <- grid_data %>% 
-  mutate(prior = dbeta(pi_grid, 104, 96),
-         likelihood = dbinom(1371,2369, pi_grid))
-```
-
-```{r}
-grid_data <- grid_data %>% 
-  mutate(unnormalized = likelihood * prior,
-         posterior = unnormalized / sum(unnormalized))
-```
 
 ```{r}
 ggplot(grid_data, aes(x = pi_grid, y = posterior)) + 
@@ -207,8 +176,9 @@ quantile(post_sample$pi_grid, c(0.025, 0.975))
 ```
 
 ```{r}
+set.seed(84735)
 ggplot(post_sample, aes(x = pi_grid)) + 
-  geom_histogram(aes(y = after_stat(density)), color = "white", bins=40) + 
+  geom_histogram(aes(y = after_stat(density)), color = "white", bins=34) + 
   stat_function(fun = dbeta, args = list(1475, 1094)) + 
   lims(x = c(0.5, 0.61))
 ```
