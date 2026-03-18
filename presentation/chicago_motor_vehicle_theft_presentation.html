@@ -6,8 +6,8 @@
 <script src="chicago_motor_vehicle_theft_presentation_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="chicago_motor_vehicle_theft_presentation_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="chicago_motor_vehicle_theft_presentation_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="chicago_motor_vehicle_theft_presentation_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.7.32">
+<link href="chicago_motor_vehicle_theft_presentation_files/libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.8.25">
 
   <meta name="author" content="Thuy, Trian, Puru, Zac">
   <title>Chicago Motor Vehicle Theft Analysis</title>
@@ -95,7 +95,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="chicago_motor_vehicle_theft_presentation_files/libs/revealjs/dist/theme/quarto-f563837468303362081e247dddd440d0.css">
+  <link rel="stylesheet" href="chicago_motor_vehicle_theft_presentation_files/libs/revealjs/dist/theme/quarto-534cd8e3a96973385dffff3f4709048d.css">
   <link href="chicago_motor_vehicle_theft_presentation_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="chicago_motor_vehicle_theft_presentation_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="chicago_motor_vehicle_theft_presentation_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -248,17 +248,17 @@ Thuy, Trian, Puru, Zac
 <section id="likelihood" class="slide level2">
 <h2>Likelihood</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">nrow</span>(df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">nrow</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 2369</code></pre>
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>count_night <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>count_night <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
 <span id="cb3-2"><a href=""></a>  <span class="fu">filter</span>(<span class="fu">hour</span>(DateTime) <span class="sc">&gt;=</span> <span class="dv">18</span> <span class="sc">|</span> <span class="fu">hour</span>(DateTime) <span class="sc">&lt;</span> <span class="dv">6</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb3-3"><a href=""></a>  <span class="fu">nrow</span>()</span>
 <span id="cb3-4"><a href=""></a></span>
-<span id="cb3-5"><a href=""></a>count_night</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-5"><a href=""></a>count_night</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 1371</code></pre>
 </div>
@@ -276,11 +276,11 @@ Thuy, Trian, Puru, Zac
 <h2>Posterior Simulation of π</h2>
 
 <img data-src="chicago_motor_vehicle_theft_presentation_files/figure-revealjs/unnamed-chunk-5-1.png" width="960" class="r-stretch"><div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">mean</span>(post_sample<span class="sc">$</span>pi_grid)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">mean</span>(post_sample<span class="sc">$</span>pi_grid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.5742616</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">quantile</span>(post_sample<span class="sc">$</span>pi_grid, <span class="fu">c</span>(<span class="fl">0.025</span>, <span class="fl">0.975</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">quantile</span>(post_sample<span class="sc">$</span>pi_grid, <span class="fu">c</span>(<span class="fl">0.025</span>, <span class="fl">0.975</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  2.5%  97.5% 
 0.5550 0.5935 </code></pre>
@@ -315,9 +315,9 @@ Y_i|\lambda \sim Poisson(\lambda)
 <section id="gamma-prior-for-lambda" class="slide level2">
 <h2>Gamma Prior for <span class="math inline">\(\lambda\)</span></h2>
 <ul>
-<li><p>Annual car theft rate in Chicago is 8.25 for every 1000 people</p></li>
+<li><p>Annual car theft rate in Chicago is 8.25 for every 1000 people (Insurance Information Institute)</p></li>
 <li><p>Total of 22,440 total stolen cars per year in Chicago, an average daily rate of 61.44</p></li>
-<li><p>For the variance of the rate, the monthly 5 year counts range from 630 to 3186</p></li>
+<li><p>For the variance of the rate, the monthly 5 year counts range from 630 to 3186 (City of Chicago)</p></li>
 <li><p>A average daily rate range of 21 to 106 from which we can construct a prior</p>
 <p><span class="math display">\[
 Gamma(6.2116,0.1011)
@@ -453,23 +453,6 @@ L(\lambda_j \mid y_j) \propto \lambda_j^{y_j} e^{-T\lambda_j}
 <p>West Town (24) and Austin (25) follow at 88.8% and 86.8%</p>
 <p>Theft risk varies substantially across Chicago neighborhoods.</p>
 </section>
-<section id="fighting-crime-with-bayesian-analysis" class="slide level2">
-<h2>Fighting Crime with Bayesian Analysis</h2>
-<p>(delete this later) Who will these results help in the future and how?</p>
-<ol type="1">
-<li><p>Help people protect their personal vehicles by being aware of dangerous times to leave vehicles unlocked or out</p></li>
-<li><p>Help law enforcement enforce regulations to limit vehicle theft, such as increasing street lighting</p></li>
-<li><p>Inform car insurance companies about risk especially in Chicago</p></li>
-</ol>
-</section>
-<section id="limitations-next-steps" class="slide level2">
-<h2>Limitations + Next Steps</h2>
-<p>(delete this later) If you had all the resources in the world and unlimited time what would you do on this topic? What are the limitations of the analysis you have done that you could correct in the future with unlimited resources?</p>
-<ol type="1">
-<li><p>No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis</p></li>
-<li><p>Investigate the number of stolen vehicles within each sector of the city for a given day with a hierarchical model</p></li>
-</ol>
-</section>
 <section id="exploring-probability-of-arrest-by-community-area" class="slide level2">
 <h2>4. Exploring probability of arrest by community area</h2>
 <p>Does the probability of arrest for motor vehicle theft vary by community area in Chicago in 2026?</p>
@@ -533,6 +516,34 @@ L(\lambda_j \mid y_j) \propto \lambda_j^{y_j} e^{-T\lambda_j}
 <li>As we can see from the heatmap, we have several districts with pairwise probability of higher arrest rates being above 0.95.</li>
 <li>It is clear that the posterior distributions of arres rates for motor vehicle thefts differ significantly by district.</li>
 </ul>
+</section>
+<section id="fighting-crime-with-bayesian-analysis" class="slide level2">
+<h2>Fighting Crime with Bayesian Analysis</h2>
+<ol type="1">
+<li><p>Help people protect their personal vehicles by being aware of dangerous times to leave vehicles unlocked or out</p></li>
+<li><p>Help law enforcement enforce regulations to limit vehicle theft, such as increasing street lighting</p></li>
+<li><p>Inform car insurance companies about risk especially in Chicago</p></li>
+</ol>
+</section>
+<section id="limitations-next-steps" class="slide level2">
+<h2>Limitations + Next Steps</h2>
+<ol type="1">
+<li><p>No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis</p></li>
+<li><p>Investigate the number of stolen vehicles within each sector of the city for a given day with a hierarchical model</p></li>
+</ol>
+</section>
+<section id="sources-cited" class="slide level2">
+<h2>Sources Cited</h2>
+<p>Bishop, Lindsay. “Vehicle Theft Statistics by State — and Most Stolen Cars and Motorcycles.” ValuePenguin, 25 Nov.&nbsp;2025, <a href="http://www.valuepenguin.com/motor-vehicle-theft-statistics">www.valuepenguin.com/motor-vehicle-theft-statistics</a>.</p>
+<p>Federal Bureau of Investigation. “National Incident-Based Reporting System (NIBRS) — Offense Categories and Data Tools.” FBI Crime Data Explorer, 2024, <a href="https://nibrs.fbi.gov/?utm_source=chatgpt.com">https://nibrs.fbi.gov/</a></p>
+<p>Federal Bureau of Investigation. “FBI Releases Data on Motor Vehicle Theft: 2019–2023.” FBI News &amp; Press Releases, 17 Oct.&nbsp;2024, <a href="https://www.fbi.gov/news/press-releases/fbi-releases-motor-vehicle-theft-2019-2023?utm_source=chatgpt.com">https://www.fbi.gov/news/press-releases/fbi-releases-motor-vehicle-theft-2019-2023</a></p>
+</section>
+<section id="continued" class="slide level2">
+<h2>Continued</h2>
+<p>“Facts + Statistics: Auto Theft | III.” Iii.org, Insurance Information Institute, 2017, <a href="http://www.iii.org/fact-statistic/facts-statistics-auto-theft">www.iii.org/fact-statistic/facts-statistics-auto-theft</a>.&nbsp;<br>
+Dr.&nbsp;Andrew Schiller. “Chicago, IL Crime Rates.” Neighborhoodscout.com, NeighborhoodScout, 24 Sept.&nbsp;2019, <a href="http://www.neighborhoodscout.com/il/chicago/crime">www.neighborhoodscout.com/il/chicago/crime</a>.</p>
+<p>“Monthly Auto Thefts, Last 5 Years | City of Chicago | Data Portal.” <em>Cityofchicago.org</em>, 2018, <a href="data.cityofchicago.org/Public-Safety/Monthly-Auto-Thefts-Last-5-Years/p6d7-vxbu">data.cityofchicago.org/Public-Safety/Monthly-Auto-Thefts-Last-5-Years/p6d7-vxbu</a>.</p>
+<p>‌</p>
 
 </section>
     </div>
@@ -724,7 +735,7 @@ L(\lambda_j \mid y_j) \propto \lambda_j^{y_j} e^{-T\lambda_j}
         margin: 0.1,
 
         math: {
-          mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js',
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
           config: 'TeX-AMS_HTML-full',
           tex2jax: {
             inlineMath: [['\\(','\\)']],
@@ -751,42 +762,80 @@ L(\lambda_j \mid y_j) \propto \lambda_j^{y_j} e^{-T\lambda_j}
       });
     </script>
     
+
     <script>
+
       // htmlwidgets need to know to resize themselves when slides are shown/hidden.
+
       // Fire the "slideenter" event (handled by htmlwidgets.js) when the current
+
       // slide changes (different for each slide format).
+
       (function () {
+
         // dispatch for htmlwidgets
+
         function fireSlideEnter() {
+
           const event = window.document.createEvent("Event");
+
           event.initEvent("slideenter", true, true);
+
           window.document.dispatchEvent(event);
+
         }
+
+    
 
         function fireSlideChanged(previousSlide, currentSlide) {
+
           fireSlideEnter();
 
+    
+
           // dispatch for shiny
+
           if (window.jQuery) {
+
             if (previousSlide) {
+
               window.jQuery(previousSlide).trigger("hidden");
+
             }
+
             if (currentSlide) {
+
               window.jQuery(currentSlide).trigger("shown");
+
             }
+
           }
+
         }
+
+    
 
         // hookup for slidy
+
         if (window.w3c_slidy) {
+
           window.w3c_slidy.add_observer(function (slide_num) {
+
             // slide_num starts at position 1
+
             fireSlideChanged(null, w3c_slidy.slides[slide_num - 1]);
+
           });
+
         }
 
+    
+
       })();
+
     </script>
+
+    
 
     <script id="quarto-html-after-body" type="application/javascript">
       window.document.addEventListener("DOMContentLoaded", function (event) {
@@ -836,13 +885,14 @@ L(\lambda_j \mid y_j) \propto \lambda_j^{y_j} e^{-T\lambda_j}
           e.clearSelection();
         }
         const getTextToCopy = function(trigger) {
-            const codeEl = trigger.previousElementSibling.cloneNode(true);
-            for (const childEl of codeEl.children) {
-              if (isCodeAnnotation(childEl)) {
-                childEl.remove();
-              }
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
             }
-            return codeEl.innerText;
+          }
+          return codeEl.innerText;
         }
         const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
           text: getTextToCopy

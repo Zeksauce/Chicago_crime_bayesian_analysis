@@ -162,11 +162,11 @@ From the plot the counts don't seem to follow a trend, so we assume that:
 
 ## Gamma Prior for $\lambda$
 
--   Annual car theft rate in Chicago is 8.25 for every 1000 people
+-   Annual car theft rate in Chicago is 8.25 for every 1000 people (Insurance Information Institute)
 
 -   Total of 22,440 total stolen cars per year in Chicago, an average daily rate of 61.44
 
--   For the variance of the rate, the monthly 5 year counts range from 630 to 3186
+-   For the variance of the rate, the monthly 5 year counts range from 630 to 3186 (City of Chicago)
 
 -   A average daily rate range of 21 to 106 from which we can construct a prior
 
@@ -637,3 +637,20 @@ ggplot(pairwise_df, aes(x = District_j, y = District_i, fill = Probability)) +
 1.  No detailed insight outside of probability that a vehicle will be stolen at night. Want an hour-to-hour analysis
 
 2.  Investigate the number of stolen vehicles within each sector of the city for a given day with a hierarchical model
+
+## Sources Cited
+
+Bishop, Lindsay. “Vehicle Theft Statistics by State — and Most Stolen Cars and Motorcycles.” ValuePenguin, 25 Nov. 2025, [www.valuepenguin.com/motor-vehicle-theft-statistics](http://www.valuepenguin.com/motor-vehicle-theft-statistics).
+
+Federal Bureau of Investigation. “National Incident-Based Reporting System (NIBRS) — Offense Categories and Data Tools.” FBI Crime Data Explorer, 2024, [https://nibrs.fbi.gov/](https://nibrs.fbi.gov/?utm_source=chatgpt.com)
+
+Federal Bureau of Investigation. “FBI Releases Data on Motor Vehicle Theft: 2019–2023.” FBI News & Press Releases, 17 Oct. 2024, [https://www.fbi.gov/news/press-releases/fbi-releases-motor-vehicle-theft-2019-2023](https://www.fbi.gov/news/press-releases/fbi-releases-motor-vehicle-theft-2019-2023?utm_source=chatgpt.com)
+
+## Continued
+
+“Facts + Statistics: Auto Theft \| III.” Iii.org, Insurance Information Institute, 2017, [www.iii.org/fact-statistic/facts-statistics-auto-theft](http://www.iii.org/fact-statistic/facts-statistics-auto-theft). \
+Dr. Andrew Schiller. “Chicago, IL Crime Rates.” Neighborhoodscout.com, NeighborhoodScout, 24 Sept. 2019, [www.neighborhoodscout.com/il/chicago/crime](http://www.neighborhoodscout.com/il/chicago/crime).
+
+“Monthly Auto Thefts, Last 5 Years \| City of Chicago \| Data Portal.” *Cityofchicago.org*, 2018, [data.cityofchicago.org/Public-Safety/Monthly-Auto-Thefts-Last-5-Years/p6d7-vxbu](data.cityofchicago.org/Public-Safety/Monthly-Auto-Thefts-Last-5-Years/p6d7-vxbu).
+
+‌
