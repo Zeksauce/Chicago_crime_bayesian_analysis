@@ -529,8 +529,7 @@ Now, we load our data.
 
 ```{r}
 library(tidyverse)
-
-df <- read.csv("../../data/chicago_vehicle_theft_crimes_2026.csv", stringsAsFactors = FALSE)
+df <- read.csv("../data/chicago_vehicle_theft_crimes_2026.csv", stringsAsFactors = FALSE)
 
 df <- df %>%
   mutate(arrest_numeric = ifelse(Arrest == "true", 1, 0))
